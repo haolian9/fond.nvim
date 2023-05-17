@@ -1,7 +1,7 @@
 local api = vim.api
 local uv = vim.loop
 
-local jelly = require("infra.jellyfish")("fond")
+local jelly = require("infra.jellyfish")("fzf")
 local state = require("fond.state")
 local bufrename = require("infra.bufrename")
 local fn = require("infra.fn")
@@ -11,9 +11,9 @@ local function resolve_dimensions()
   -- show prompt at cursor line when possible
   -- horizental center
 
-  local win_id = api.nvim_get_current_win()
+  local winid = api.nvim_get_current_win()
 
-  local winfo = assert(vim.fn.getwininfo(win_id)[1])
+  local winfo = assert(vim.fn.getwininfo(winid)[1])
   local win_width, win_height = winfo.width, winfo.height
   -- takes folding into account
   local win_row = vim.fn.winline()
@@ -62,15 +62,15 @@ local function main(src_fpath, last_query, callback, opts)
   end
 
   -- setup win
-  local win_id
+  local winid
   do
     local width, height, row, col = resolve_dimensions()
     -- stylua: ignore
-    win_id = api.nvim_open_win(bufnr, true, {
+    winid = api.nvim_open_win(bufnr, true, {
       style = "minimal", border = "single", zindex = 250,
       relative = "win", width = width, height = height, row = row, col = col,
     })
-    api.nvim_win_set_hl_ns(win_id, assert(state.ns))
+    api.nvim_win_set_hl_ns(winid, assert(state.ns))
   end
 
   local output_fpath = os.tmpname()
@@ -97,7 +97,7 @@ local function main(src_fpath, last_query, callback, opts)
 
   local job_id = vim.fn.termopen(cmd, {
     on_exit = function(_, exit_code)
-      api.nvim_win_close(win_id, true)
+      api.nvim_win_close(winid, true)
       local cb_ok, cb_err = xpcall(function()
         -- 0: ok, 1: no match, 2: error, 130: interrupt
         if not (exit_code == 0 or exit_code == 1 or exit_code == 130) then
@@ -129,7 +129,7 @@ local function main(src_fpath, last_query, callback, opts)
       -- todo what if no file is created?
       uv.fs_unlink(output_fpath)
       if opts.pending_unlink then uv.fs_unlink(src_fpath) end
-      if not cb_ok then jelly.err(cb_err) end
+      if not cb_ok then jelly.err("fzf callback error: %s", cb_err) end
     end,
     pty = true,
     stderr_buffered = false,

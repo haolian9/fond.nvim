@@ -2,14 +2,19 @@
 a fuzzy finder for nvim based on fzf
 
 ## status
-
-not ready yet
+just-works(tm)
 
 ## prerequisites
 * linux
-* nvim 0.8.*
+* nvim 0.9.*
 * haolian9/infra.nvim
 * haolian9/fzf # fork of junegunn's
+
+optional
+* fd
+* git
+* haolian9/olds.nvim
+* lsp
 
 ## sources
 * files
@@ -17,6 +22,8 @@ not ready yet
 * git modified files
 * buffers
 * mru
+* olds
 * sibling files
-* lsp symbols
+* lsp document symbols
+* lsp workspace symbols
 * windows

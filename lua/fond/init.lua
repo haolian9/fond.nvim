@@ -2,6 +2,7 @@
 -- * sourcer -> file
 -- * file -> fzf -> stdout (maybe)
 -- * no app abstract: {state, source, handler}; it's over complicated, bloating the code base
+-- * no hard limit for singleton: in my practice, it's over complicated to use mutexes in the callback-based async codes
 --
 -- file structures
 -- * state: {queries: {sourcer: query}}
@@ -18,7 +19,6 @@
 --    * treesitter tokens
 --
 -- todo: avoid unnecessary tmpfile for buffers
--- todo: mutex, in my practice, it's over complicated to impl in the callback-based async codes
 -- todo: alternative MRU source: `find $root -type f -newermt '1 weeks ago'`
 --
 
@@ -41,9 +41,7 @@ local function cachable_provider(srcname)
     local last_query = use_last_query and state.queries[srcname] or nil
 
     source(use_cached_source, function(src_fpath, fzf_opts)
-      vim.schedule(function()
-        fzf(src_fpath, last_query, handler, fzf_opts)
-      end)
+      vim.schedule(function() fzf(src_fpath, last_query, handler, fzf_opts) end)
     end)
   end
 end
@@ -54,9 +52,7 @@ local function fresh_provider(srcname)
 
   return function()
     source(function(src_fpath, fzf_opts)
-      vim.schedule(function()
-        fzf(src_fpath, nil, handler, fzf_opts)
-      end)
+      vim.schedule(function() fzf(src_fpath, nil, handler, fzf_opts) end)
     end)
   end
 end
@@ -64,7 +60,9 @@ end
 M.files = cachable_provider("files")
 M.siblings = cachable_provider("siblings")
 M.tracked = cachable_provider("git_files")
-M.symbols = cachable_provider("lsp_symbols")
+M.document_symbols = cachable_provider("lsp_document_symbols")
+M.workspace_symbols = cachable_provider("lsp_workspace_symbols")
+M.olds = cachable_provider("olds")
 
 M.mru = fresh_provider("mru")
 M.buffers = fresh_provider("buffers")

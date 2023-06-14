@@ -8,6 +8,8 @@ local project = require("infra.project")
 local fn = require("infra.fn")
 local ex = require("infra.ex")
 local strlib = require("infra.strlib")
+local prefer = require("infra.prefer")
+local jumplist = require("infra.jumplist")
 
 local function make_general_handler(srcname, choice_interpreter)
   -- stylua: ignore
@@ -40,7 +42,7 @@ M.olds = make_general_handler("mru") -- share query-history with mru
 M.siblings = make_general_handler("siblings", function(choices) return fs.joinpath(vim.fn.expand("%:p:h"), choices[1]) end)
 M.buffers = make_general_handler("buffers", function(choices)
   local fname = choices[1]
-  if vim.startswith(fname, "/") then return fname end
+  if strlib.startswith(fname, "/") then return fname end
   return fs.joinpath(project.working_root(), fname)
 end)
 
@@ -69,7 +71,7 @@ do
     api.nvim_win_call(src_win_id, function()
       src_view = vim.fn.winsaveview()
       for _, opt in ipairs({ "list" }) do
-        src_wo[opt] = api.nvim_win_get_option(src_win_id, opt)
+        src_wo[opt] = prefer.wo(src_win_id, opt)
       end
       -- no considering window-local options
     end)
@@ -80,7 +82,7 @@ do
       api.nvim_win_set_buf(winid, src_bufnr)
       vim.fn.winrestview(src_view)
       for opt, val in pairs(src_wo) do
-        api.nvim_win_set_option(winid, opt, val)
+        prefer.wo(winid, opt, val)
       end
     end)
   end
@@ -109,15 +111,19 @@ do
     local _, col, row = choice_interpreter(choices)
     local win_open_cmd = action_interpreter(action)
 
+    jumplist.push_here()
+
     if win_open_cmd ~= nil then ex(win_open_cmd) end
-    local wind = api.nvim_get_current_win()
-    api.nvim_win_set_cursor(wind, { row, col })
+    local winid = api.nvim_get_current_win()
+    api.nvim_win_set_cursor(winid, { row, col })
   end
 
   function M.lsp_workspace_symbols(query, action, choices)
     state.queries["lsp_workspace_symbols"] = query
     local fpath, col, row = choice_interpreter(choices)
     local win_open_cmd = action_interpreter(action)
+
+    jumplist.push_here()
 
     if win_open_cmd ~= nil then ex(win_open_cmd) end
     local winid = api.nvim_get_current_win()

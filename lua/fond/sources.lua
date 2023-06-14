@@ -7,6 +7,8 @@ local fn = require("infra.fn")
 local cthulhu = require("cthulhu")
 local subprocess = require("infra.subprocess")
 local jelly = require("infra.jellyfish")("fzf.sources")
+local prefer = require("infra.prefer")
+local listlib = require("infra.listlib")
 
 local state = require("fond.state")
 local lsp_symbol_resolver = require("fond.lsp_symbol_resolver")
@@ -83,7 +85,7 @@ do -- filesystem relevant
       "--exclude", ".git",
     }
 
-    subprocess.asyncrun("fd", { args = fd_args, cwd = root }, write_lines(fd), function(code)
+    subprocess.spawn("fd", { args = fd_args, cwd = root }, write_lines(fd), function(code)
       if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
@@ -110,7 +112,7 @@ do -- filesystem relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end
 
-    subprocess.asyncrun("fd", { args = fd_args, cwd = root }, write_lines(fd), function(code)
+    subprocess.spawn("fd", { args = fd_args, cwd = root }, write_lines(fd), function(code)
       if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
@@ -128,7 +130,7 @@ do -- git relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
-    subprocess.asyncrun("git", { args = { "ls-files" }, cwd = root }, write_lines(fd), function(code)
+    subprocess.spawn("git", { args = { "ls-files" }, cwd = root }, write_lines(fd), function(code)
       if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
@@ -142,7 +144,7 @@ do -- git relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
-    subprocess.asyncrun("git", { args = { "ls-files", "--modified" }, cwd = root }, write_lines(fd), function(code)
+    subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, write_lines(fd), function(code)
       if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = true }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
@@ -156,7 +158,7 @@ do -- vim relevant
     local root = project.working_root()
 
     local function resolve_bufname(bufnr)
-      if api.nvim_buf_get_option(bufnr, "buftype") ~= "" then return end
+      if prefer.bo(bufnr, "buftype") ~= "" then return end
       local bufname = api.nvim_buf_get_name(bufnr)
       if strlib.find(bufname, "://") then return end
 
@@ -191,7 +193,7 @@ do -- vim relevant
     local root = project.working_root()
 
     local function resolve_fname(name)
-      if vim.startswith(name, "/tmp/") then return end
+      if strlib.startswith(name, "/tmp/") then return end
       -- /.git/COMMIT_EDITMSG
       if strlib.find(name, "/.git/") then return end
       -- term://
@@ -199,7 +201,7 @@ do -- vim relevant
       -- [Preview]
       if strlib.find(name, "[") then return end
       -- .shada
-      if vim.endswith(name, ".shada") then return end
+      if strlib.endswith(name, ".shada") then return end
       local relative = fs.relative_path(root, name)
       return relative or name
     end
@@ -252,7 +254,7 @@ do -- vim relevant
           local tab_id = tab_iter()
           if tab_id == nil then return end
           tabnr = api.nvim_tabpage_get_number(tab_id)
-          win_iter = fn.list_iter(api.nvim_tabpage_list_wins(tab_id))
+          win_iter = listlib.iter(api.nvim_tabpage_list_wins(tab_id))
         end
         for winid in win_iter do
           local bufnr = api.nvim_win_get_buf(winid)
@@ -282,7 +284,7 @@ do -- lsp relevant
     local fpath
     do
       local bufnr = api.nvim_get_current_buf()
-      local ft = api.nvim_buf_get_option(bufnr, "filetype")
+      local ft = prefer.bo(bufnr, "filetype")
       resolver = lsp_symbol_resolver[ft]
       if resolver == nil then return jelly.info("no symbol handler found for %s", ft) end
       fpath = vim.fn.fnamemodify(api.nvim_buf_get_name(bufnr), ":p")
@@ -309,7 +311,7 @@ do -- lsp relevant
     local fpath
     do
       local bufnr = api.nvim_get_current_buf()
-      local ft = api.nvim_buf_get_option(bufnr, "filetype")
+      local ft = prefer.bo(bufnr, "filetype")
       resolver = lsp_symbol_resolver[ft]
       if resolver == nil then return jelly.info("no symbol handler found for %s", ft) end
       fpath = string.format("%s@%s", assert(project.git_root()), ft)

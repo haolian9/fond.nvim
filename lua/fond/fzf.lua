@@ -6,8 +6,9 @@ local state = require("fond.state")
 local bufrename = require("infra.bufrename")
 local fn = require("infra.fn")
 local ex = require("infra.ex")
+local prefer = require("infra.prefer")
 
-local function resolve_dimensions()
+local function resolve_geometry()
   -- show prompt at cursor line when possible
   -- horizental center
 
@@ -43,28 +44,34 @@ local function readall(path)
   return content
 end
 
-local function main(src_fpath, last_query, callback, opts)
+---@class fond.fzf.Opts
+---@field pending_unlink? boolean
+---@field source_length? number
+---@field source_max_width? number
+---@field with_nth? number @same to fzf --with-nth
+
+---@param opts fond.fzf.Opts
+local function fulfill_opts(opts) opts.pending_unlink = fn.nilor(opts.pending_unlink, false) end
+
+---@param src_fpath string
+---@param last_query string
+---@param callback fun(query: string, action: string, choices: string[])
+---@param opts fond.fzf.Opts
+return function(src_fpath, last_query, callback, opts)
   assert(callback ~= nil)
-  opts = vim.tbl_extend("keep", opts or {}, {
-    pending_unlink = false,
-    -- honor those options
-    source_length = nil,
-    source_max_width = nil,
-    -- same to fzf --with-nth
-    with_nth = nil,
-  })
+  fulfill_opts(opts)
 
   -- setup buf
   local bufnr
   do
     bufnr = api.nvim_create_buf(false, true)
-    api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
+    prefer.bo(bufnr, "bufhidden", "wipe")
   end
 
   -- setup win
   local winid
   do
-    local width, height, row, col = resolve_dimensions()
+    local width, height, row, col = resolve_geometry()
     -- stylua: ignore
     winid = api.nvim_open_win(bufnr, true, {
       style = "minimal", border = "single", zindex = 250,
@@ -140,5 +147,3 @@ local function main(src_fpath, last_query, callback, opts)
   bufrename(bufnr, string.format("fzf://%d", job_id))
   ex("startinsert")
 end
-
-return main

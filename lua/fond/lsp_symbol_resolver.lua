@@ -5,8 +5,8 @@
 -- when the result not satisfies you, changes those resolver according to the `vim.lsp.buf.document_symbol()`
 --
 
-local fn = require("infra.fn")
 local strlib = require("infra.strlib")
+local listlib = require("infra.listlib")
 
 ---@enum
 local symbols = {
@@ -40,7 +40,7 @@ local function resolve_items(line_resolver)
   ---@param items Item[]
   ---@return fun(): string?
   return function(items)
-    local iter = fn.list_iter(items)
+    local iter = listlib.iter(items)
 
     return function()
       for item in iter do
@@ -61,7 +61,7 @@ local function lua(item)
     symbol = symbols.Function
   elseif item.kind == "Function" then
     -- no: anonymous function
-    if vim.endswith(item.text, "->") then return end
+    if strlib.endswith(item.text, "->") then return end
   else
     -- no: whitelist only
     return
@@ -75,10 +75,10 @@ end
 local function c(item)
   if item.kind == "Struct" or item.kind == "Class" then
     -- no: anony struct
-    if vim.endswith(item.text, "(anonymous struct)") then return end
+    if strlib.endswith(item.text, "(anonymous struct)") then return end
   elseif item.kind == "Enum" then
     -- no: anony enum
-    if vim.endswith(item.text, "(anonymous enum)") then return end
+    if strlib.endswith(item.text, "(anonymous enum)") then return end
   elseif item.kind == "Function" then
   else
     -- Field, Variable

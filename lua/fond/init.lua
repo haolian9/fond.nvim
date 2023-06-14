@@ -24,10 +24,28 @@
 
 local M = {}
 
+local coreutils = require("infra.coreutils")
+
 local fzf = require("fond.fzf")
 local sources = require("fond.sources")
 local handlers = require("fond.handlers")
 local state = require("fond.state")
+
+local api = vim.api
+
+do -- module init
+  do -- state.root
+    local root = string.format("/tmp/%s-nvim-fzf", coreutils.whoami())
+    assert(coreutils.mkdir(root, tonumber("700", 8)))
+    state.root = root
+  end
+
+  do -- state.ns
+    state.ns = api.nvim_create_namespace("fzf.floatwin")
+    api.nvim_set_hl(state.ns, "VertSplit", { ctermfg = 8 })
+    api.nvim_set_hl(state.ns, "NormalFloat", { ctermfg = 8 })
+  end
+end
 
 local function cachable_provider(srcname)
   local source = assert(sources[srcname])

@@ -11,8 +11,6 @@ local listlib = require("infra.listlib")
 ---@enum
 local symbols = {
   Function = "函",
-  -- todo: more accurate name; python function, method;
-  -- some lang servers dont add the class name to the response text?
   Method = "函",
   Struct = "構",
   Class = "構",

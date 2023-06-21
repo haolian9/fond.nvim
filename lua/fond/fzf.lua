@@ -89,8 +89,9 @@ return function(src_fpath, last_query, callback, opts)
     "--input-file", src_fpath,
     "--print-query",
     "--color", "light,fg:238,bg:15,fg+:8,bg+:15,hl:9,hl+:9,query:8:regular",
-    "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t",
-    "--bind", "char:unbind(char)+clear-query+put,ctrl-/:accept,ctrl-o:accept,ctrl-t:accept",
+    "--bind", "char:unbind(char)+clear-query+put", -- placeholder&clear
+    "--bind", "ctrl-/:accept,ctrl-o:accept,ctrl-t:accept,space:accept", -- keys to accept
+    "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space",
     "--output-file", output_fpath,
   }
   if last_query ~= nil then
@@ -118,10 +119,16 @@ return function(src_fpath, last_query, callback, opts)
         local choices = {}
         do
           local parse_ok, parse_err = xpcall(function()
-            if lines[1] == nil then return end
-            query = lines[1]
-            if lines[2] == nil then return end
-            action = lines[2]
+            do
+              query = lines[1]
+              if query == nil then return end
+            end
+            do
+              action = lines[2]
+              if action == nil then return end
+              -- treat <space> as <c-m>
+              if action == "space" then action = "ctrl-m" end
+            end
             for i = 3, #lines do
               if #lines[i] == 0 then break end
               table.insert(choices, lines[i])
@@ -133,7 +140,6 @@ return function(src_fpath, last_query, callback, opts)
         local ok, err = xpcall(callback, debug.traceback, query, action, choices)
         if not ok then jelly.err(err) end
       end, debug.traceback)
-      -- todo what if no file is created?
       uv.fs_unlink(output_fpath)
       if opts.pending_unlink then uv.fs_unlink(src_fpath) end
       if not cb_ok then jelly.err("fzf callback error: %s", cb_err) end

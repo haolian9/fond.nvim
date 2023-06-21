@@ -127,7 +127,6 @@ do
 
     if win_open_cmd ~= nil then ex(win_open_cmd) end
     local winid = api.nvim_get_current_win()
-    -- todo: is there a way to find exist bufnr using fpath?
     ex("edit", fpath)
     api.nvim_win_set_cursor(winid, { row, col })
   end

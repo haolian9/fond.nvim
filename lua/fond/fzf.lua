@@ -107,10 +107,9 @@ return function(src_fpath, last_query, callback, opts)
     on_exit = function(_, exit_code)
       api.nvim_win_close(winid, true)
       local cb_ok, cb_err = xpcall(function()
-        -- 0: ok, 1: no match, 2: error, 130: interrupt
         if not (exit_code == 0 or exit_code == 1 or exit_code == 130) then
-          jelly.err("fzf exited abnormally, code=%d, src=%s, cmd=%s", exit_code, src_fpath, vim.json.encode(cmd))
-          return
+          -- 0: ok, 1: no match, 2: error, 130: interrupt
+          return jelly.err("fzf exited abnormally, code=%d, src=%s, cmd=%s", exit_code, src_fpath, vim.json.encode(cmd))
         end
 
         local lines = fn.split(readall(output_fpath), "\n")

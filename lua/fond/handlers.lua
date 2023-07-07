@@ -1,18 +1,18 @@
 local M = {}
 
 local api = vim.api
-local jelly = require("infra.jellyfish")("fzf.handlers")
-local fs = require("infra.fs")
-local state = require("fond.state")
-local project = require("infra.project")
-local fn = require("infra.fn")
 local ex = require("infra.ex")
-local strlib = require("infra.strlib")
-local prefer = require("infra.prefer")
+local fn = require("infra.fn")
+local fs = require("infra.fs")
+local jelly = require("infra.jellyfish")("fzf.handlers")
 local jumplist = require("infra.jumplist")
+local prefer = require("infra.prefer")
+local project = require("infra.project")
+local strlib = require("infra.strlib")
+
+local state = require("fond.state")
 
 local function make_general_handler(srcname, choice_interpreter)
-  -- stylua: ignore
   if choice_interpreter == nil then
     -- only the first choice will be accepted
     choice_interpreter = function(choices) return choices[1] end
@@ -37,8 +37,7 @@ end
 M.files = make_general_handler("files")
 M.git_files = make_general_handler("git_files")
 M.git_modified_files = make_general_handler("git_modified_files")
-M.mru = make_general_handler("mru")
-M.olds = make_general_handler("mru") -- share query-history with mru
+M.olds = make_general_handler("olds")
 M.siblings = make_general_handler("siblings", function(choices) return fs.joinpath(vim.fn.expand("%:p:h"), choices[1]) end)
 M.buffers = make_general_handler("buffers", function(choices)
   local fname = choices[1]

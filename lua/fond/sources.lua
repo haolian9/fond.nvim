@@ -1,17 +1,17 @@
 local M = {}
 
+local fn = require("infra.fn")
+local fs = require("infra.fs")
+local jelly = require("infra.jellyfish")("fzf.sources")
+local listlib = require("infra.listlib")
+local prefer = require("infra.prefer")
 local project = require("infra.project")
 local strlib = require("infra.strlib")
-local fs = require("infra.fs")
-local fn = require("infra.fn")
-local cthulhu = require("cthulhu")
 local subprocess = require("infra.subprocess")
-local jelly = require("infra.jellyfish")("fzf.sources")
-local prefer = require("infra.prefer")
-local listlib = require("infra.listlib")
 
-local state = require("fond.state")
+local cthulhu = require("cthulhu")
 local lsp_symbol_resolver = require("fond.lsp_symbol_resolver")
+local state = require("fond.state")
 
 local uv = vim.loop
 local api = vim.api
@@ -35,7 +35,7 @@ local function file_exists(fpath)
   error(msg)
 end
 
-local function honor_callback(callback, ...)
+local function guarded_callback(callback, ...)
   local ok, err = xpcall(callback, debug.traceback, ...)
   if not ok then vim.schedule(function() jelly.err(err) end) end
 end
@@ -51,7 +51,8 @@ local function guarded_close(fd, callback)
 end
 
 ---@param fd number
-local function write_lines(fd)
+---@return fun(lines: string[]): boolean
+local function LineWriter(fd)
   return function(lines)
     return guarded_close(fd, function()
       for line in lines do
@@ -70,7 +71,7 @@ do -- filesystem relevant
     if root == nil then return end
 
     local dest_fpath = resolve_dest_fpath(root, "files")
-    if use_cached_source and file_exists(dest_fpath) then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end
@@ -85,8 +86,8 @@ do -- filesystem relevant
       "--exclude", ".git",
     }
 
-    subprocess.spawn("fd", { args = fd_args, cwd = root }, write_lines(fd), function(code)
-      if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
+    subprocess.spawn("fd", { args = fd_args, cwd = root }, LineWriter(fd), function(code)
+      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
@@ -96,7 +97,7 @@ do -- filesystem relevant
 
     local root = vim.fn.expand("%:p:h")
     local dest_fpath = resolve_dest_fpath(root, "siblings")
-    if use_cached_source and file_exists(dest_fpath) then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
 
     -- stylua: ignore
     local fd_args = {
@@ -112,8 +113,8 @@ do -- filesystem relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end
 
-    subprocess.spawn("fd", { args = fd_args, cwd = root }, write_lines(fd), function(code)
-      if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
+    subprocess.spawn("fd", { args = fd_args, cwd = root }, LineWriter(fd), function(code)
+      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
@@ -125,13 +126,13 @@ do -- git relevant
     if root == nil then return jelly.info("not a git repo") end
 
     local dest_fpath = resolve_dest_fpath(root, "gitfiles")
-    if use_cached_source and file_exists(dest_fpath) then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
-    subprocess.spawn("git", { args = { "ls-files" }, cwd = root }, write_lines(fd), function(code)
-      if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = false }) end
+    subprocess.spawn("git", { args = { "ls-files" }, cwd = root }, LineWriter(fd), function(code)
+      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
@@ -144,8 +145,8 @@ do -- git relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
-    subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, write_lines(fd), function(code)
-      if code == 0 then return honor_callback(callback, dest_fpath, { pending_unlink = true }) end
+    subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, LineWriter(fd), function(code)
+      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = true }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
@@ -180,46 +181,9 @@ do -- vim relevant
       end
     end)
 
-    if ok then return honor_callback(callback, dest_fpath, { pending_unlink = true }) end
+    if ok then return guarded_callback(callback, dest_fpath, { pending_unlink = true }) end
   end
 
-  function M.mru(callback)
-    assert(callback ~= nil)
-
-    local dest_fpath = os.tmpname()
-    local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-    if open_err ~= nil then return jelly.err(open_err) end
-
-    local root = project.working_root()
-
-    local function resolve_fname(name)
-      if strlib.startswith(name, "/tmp/") then return end
-      -- /.git/COMMIT_EDITMSG
-      if strlib.find(name, "/.git/") then return end
-      -- term://
-      if strlib.find(name, "://") then return end
-      -- [Preview]
-      if strlib.find(name, "[") then return end
-      -- .shada
-      if strlib.endswith(name, ".shada") then return end
-      local relative = fs.relative_path(root, name)
-      return relative or name
-    end
-
-    local ok = guarded_close(fd, function()
-      for _, name in ipairs(vim.v.oldfiles) do
-        local fname = resolve_fname(name)
-        if fname ~= nil then
-          uv.fs_write(fd, fname)
-          uv.fs_write(fd, "\n")
-        end
-      end
-    end)
-
-    if ok then return honor_callback(callback, dest_fpath, { pending_unlink = true }) end
-  end
-
-  -- same to .mru(), but use olds as backend
   function M.olds(use_cached_source, callback)
     assert(callback ~= nil)
 
@@ -231,7 +195,7 @@ do -- vim relevant
       if not olds.dump(dest_fpath) then return jelly.err("failed to dump oldfiles") end
     end
 
-    return honor_callback(callback, dest_fpath, { pending_unlink = false })
+    return guarded_callback(callback, dest_fpath, { pending_unlink = false })
   end
 
   function M.windows(callback)
@@ -270,8 +234,8 @@ do -- vim relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
     -- (winid,bufnr bufname)
-    local ok = write_lines(fd)(source())
-    if ok then return honor_callback(callback, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
+    local ok = LineWriter(fd)(source())
+    if ok then return guarded_callback(callback, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
   end
 end
 
@@ -291,15 +255,15 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_document_symbols")
-    if use_cached_source and file_exists(dest_fpath) then return honor_callback(callback, dest_fpath, fzf_opts) end
+    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
     vim.lsp.buf.document_symbol({
       on_list = function(args)
-        local ok = write_lines(fd)(resolver(args.items))
-        if ok then return honor_callback(callback, dest_fpath, fzf_opts) end
+        local ok = LineWriter(fd)(resolver(args.items))
+        if ok then return guarded_callback(callback, dest_fpath, fzf_opts) end
       end,
     })
   end
@@ -318,7 +282,7 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_workspace_symbols")
-    if use_cached_source and file_exists(dest_fpath) then return honor_callback(callback, dest_fpath, fzf_opts) end
+    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -326,8 +290,8 @@ do -- lsp relevant
     -- todo: proper module prefix
     vim.lsp.buf.workspace_symbol("", {
       on_list = function(args)
-        local ok = write_lines(fd)(resolver(args.items))
-        if ok then return honor_callback(callback, dest_fpath, fzf_opts) end
+        local ok = LineWriter(fd)(resolver(args.items))
+        if ok then return guarded_callback(callback, dest_fpath, fzf_opts) end
       end,
     })
   end

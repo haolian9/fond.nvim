@@ -1,12 +1,13 @@
 local api = vim.api
 local uv = vim.loop
 
-local jelly = require("infra.jellyfish")("fzf")
-local state = require("fond.state")
 local bufrename = require("infra.bufrename")
-local fn = require("infra.fn")
 local ex = require("infra.ex")
+local fn = require("infra.fn")
+local jelly = require("infra.jellyfish")("fzf")
 local prefer = require("infra.prefer")
+
+local state = require("fond.state")
 
 local function resolve_geometry()
   -- show prompt at cursor line when possible
@@ -54,7 +55,7 @@ end
 local function fulfill_opts(opts) opts.pending_unlink = fn.nilor(opts.pending_unlink, false) end
 
 ---@param src_fpath string
----@param last_query string
+---@param last_query? string
 ---@param callback fun(query: string, action: string, choices: string[])
 ---@param opts fond.fzf.Opts
 return function(src_fpath, last_query, callback, opts)

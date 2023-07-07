@@ -19,7 +19,6 @@
 --    * treesitter tokens
 --
 -- todo: avoid unnecessary tmpfile for buffers
--- todo: alternative MRU source: `find $root -type f -newermt '1 weeks ago'`
 --
 
 local M = {}
@@ -27,8 +26,8 @@ local M = {}
 local coreutils = require("infra.coreutils")
 
 local fzf = require("fond.fzf")
-local sources = require("fond.sources")
 local handlers = require("fond.handlers")
+local sources = require("fond.sources")
 local state = require("fond.state")
 
 local api = vim.api
@@ -82,7 +81,6 @@ M.document_symbols = cachable_provider("lsp_document_symbols")
 M.workspace_symbols = cachable_provider("lsp_workspace_symbols")
 M.olds = cachable_provider("olds")
 
-M.mru = fresh_provider("mru")
 M.buffers = fresh_provider("buffers")
 M.modified = fresh_provider("git_modified_files")
 M.windows = fresh_provider("windows")

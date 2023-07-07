@@ -3,6 +3,6 @@ return {
   root = nil,
   ns = nil,
 
-  -- {source-name: last-query}
+  --@type {[string]: string} @{source-name: last-query}
   queries = {},
 }

@@ -1,6 +1,3 @@
-local api = vim.api
-local uv = vim.loop
-
 local bufrename = require("infra.bufrename")
 local ex = require("infra.ex")
 local fn = require("infra.fn")
@@ -8,6 +5,9 @@ local jelly = require("infra.jellyfish")("fzf")
 local prefer = require("infra.prefer")
 
 local state = require("fond.state")
+
+local api = vim.api
+local uv = vim.loop
 
 local function resolve_geometry()
   -- show prompt at cursor line when possible
@@ -78,7 +78,7 @@ return function(src_fpath, last_query, callback, opts)
       style = "minimal", border = "single", zindex = 250,
       relative = "win", width = width, height = height, row = row, col = col,
     })
-    api.nvim_win_set_hl_ns(winid, assert(state.ns))
+    api.nvim_win_set_hl_ns(winid, assert(state.hl_ns))
   end
 
   local output_fpath = os.tmpname()

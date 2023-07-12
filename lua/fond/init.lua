@@ -39,10 +39,10 @@ do -- module init
     state.root = root
   end
 
-  do -- state.ns
-    state.ns = api.nvim_create_namespace("fzf.floatwin")
-    api.nvim_set_hl(state.ns, "VertSplit", { ctermfg = 8 })
-    api.nvim_set_hl(state.ns, "NormalFloat", { ctermfg = 8 })
+  do -- state.hl_ns
+    state.hl_ns = api.nvim_create_namespace("fzf.floatwin")
+    api.nvim_set_hl(state.hl_ns, "VertSplit", { ctermfg = 8 })
+    api.nvim_set_hl(state.hl_ns, "NormalFloat", { ctermfg = 8 })
   end
 end
 
@@ -83,6 +83,7 @@ M.olds = cachable_provider("olds")
 
 M.buffers = fresh_provider("buffers")
 M.modified = fresh_provider("git_modified_files")
+M.statuses = fresh_provider("git_status_files")
 M.windows = fresh_provider("windows")
 
 return M

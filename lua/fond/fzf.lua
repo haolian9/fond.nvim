@@ -9,6 +9,15 @@ local state = require("fond.state")
 local api = vim.api
 local uv = vim.loop
 
+local colors
+do --ref: https://man.archlinux.org/man/fzf.1.en#color=
+  if vim.go.background == "light" then
+    colors = "light,fg:238,bg:15,fg+:8,bg+:15,hl:9,hl+:9,query:8:regular"
+  else
+    colors = "dark,fg:7,bg:0,fg+:15,bg+:0,hl:9,hl+:9,query:7:regular"
+  end
+end
+
 local function resolve_geometry()
   -- show prompt at cursor line when possible
   -- horizental center
@@ -89,7 +98,7 @@ return function(src_fpath, last_query, callback, opts)
     "--ansi",
     "--input-file", src_fpath,
     "--print-query",
-    "--color", "light,fg:238,bg:15,fg+:8,bg+:15,hl:9,hl+:9,query:8:regular",
+    "--color", colors,
     "--bind", "char:unbind(char)+clear-query+put", -- placeholder&clear
     "--bind", "ctrl-/:accept,ctrl-o:accept,ctrl-t:accept,space:accept", -- keys to accept
     "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space",

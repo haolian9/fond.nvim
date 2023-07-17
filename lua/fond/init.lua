@@ -24,6 +24,7 @@
 local M = {}
 
 local coreutils = require("infra.coreutils")
+local highlighter = require("infra.highlighter")
 
 local fzf = require("fond.fzf")
 local handlers = require("fond.handlers")
@@ -41,8 +42,14 @@ do -- module init
 
   do -- state.hl_ns
     state.hl_ns = api.nvim_create_namespace("fzf.floatwin")
-    api.nvim_set_hl(state.hl_ns, "VertSplit", { ctermfg = 8 })
-    api.nvim_set_hl(state.hl_ns, "NormalFloat", { ctermfg = 8 })
+    local hi = highlighter(state.hl_ns)
+    if vim.go.background == "light" then
+      hi("NormalFloat", { fg = 8 })
+      hi("WinSeparator", { fg = 243 })
+    else
+      hi("NormalFloat", { fg = 7 })
+      hi("WinSeparator", { fg = 243 })
+    end
   end
 end
 

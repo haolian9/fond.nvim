@@ -44,7 +44,6 @@ M.git_status_files = make_general_handler("git_status_files", function(choices)
   assert(string.sub(line, 3) == " ")
   return string.sub(line, 4)
 end)
-M.olds = make_general_handler("olds")
 M.siblings = make_general_handler("siblings", function(choices) return fs.joinpath(vim.fn.expand("%:p:h"), choices[1]) end)
 M.buffers = make_general_handler("buffers", function(choices)
   local fname = choices[1]
@@ -136,6 +135,35 @@ do
     ex("edit", fpath)
     api.nvim_win_set_cursor(winid, { row, col })
   end
+end
+
+function M.olds(query, action, choices)
+  state.queries["olds"] = query
+
+  local path, lnum, col
+  do
+    local line = choices[1]
+    path, lnum, col = string.match(line, "^(.+):(%d+):(%d+)$")
+    lnum = tonumber(lnum)
+    col = tonumber(col)
+    assert(path and lnum and col)
+  end
+
+  if action == "ctrl-/" then
+    ex("vsplit", path)
+  elseif action == "ctrl-o" then
+    ex("split", path)
+  elseif action == "ctrl-m" then
+    ex("edit", path)
+  elseif action == "ctrl-t" then
+    ex("tabedit", path)
+  else
+    jelly.warn("no handler for action=%s", action)
+    return
+  end
+
+  jelly.debug("path=%s, line=%d, col=%d", path, lnum, col)
+  api.nvim_win_set_cursor(0, { lnum + 1, col })
 end
 
 return M

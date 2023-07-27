@@ -41,7 +41,7 @@ M.git_modified_files = make_general_handler("git_modified_files")
 M.git_status_files = make_general_handler("git_status_files", function(choices)
   local line = choices[1]
   --it should start with a 3-length prefix: `?? ` or ` M ` or ` D ` ...
-  assert(string.sub(line, 3) == " ")
+  assert(string.sub(line, 3, 3) == " ")
   return string.sub(line, 4)
 end)
 M.siblings = make_general_handler("siblings", function(choices) return fs.joinpath(vim.fn.expand("%:p:h"), choices[1]) end)

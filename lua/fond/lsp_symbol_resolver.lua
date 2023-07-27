@@ -5,8 +5,8 @@
 -- when the result not satisfies you, changes those resolver according to the `vim.lsp.buf.document_symbol()`
 --
 
-local strlib = require("infra.strlib")
 local listlib = require("infra.listlib")
+local strlib = require("infra.strlib")
 
 ---@enum
 local symbols = {

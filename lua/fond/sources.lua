@@ -1,5 +1,7 @@
 local M = {}
 
+local cthulhu = require("cthulhu")
+local bufpath = require("infra.bufpath")
 local fn = require("infra.fn")
 local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("fzf.sources")
@@ -9,7 +11,6 @@ local project = require("infra.project")
 local strlib = require("infra.strlib")
 local subprocess = require("infra.subprocess")
 
-local cthulhu = require("cthulhu")
 local lsp_symbol_resolver = require("fond.lsp_symbol_resolver")
 local state = require("fond.state")
 
@@ -24,15 +25,6 @@ local function resolve_dest_fpath(path, use_for)
   assert(state.root)
   local name = string.format("%s-%s", use_for, cthulhu.md5(path))
   return fs.joinpath(state.root, name)
-end
-
----@param fpath string
----@return boolean
-local function file_exists(fpath)
-  local stat, msg, err = uv.fs_stat(fpath)
-  if stat ~= nil then return true end
-  if err == "ENOENT" then return false end
-  error(msg)
 end
 
 local function guarded_callback(callback, ...)
@@ -71,7 +63,7 @@ do -- filesystem relevant
     if root == nil then return end
 
     local dest_fpath = resolve_dest_fpath(root, "files")
-    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end
@@ -97,7 +89,7 @@ do -- filesystem relevant
 
     local root = vim.fn.expand("%:p:h")
     local dest_fpath = resolve_dest_fpath(root, "siblings")
-    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
 
     -- stylua: ignore
     local fd_args = {
@@ -126,7 +118,7 @@ do -- git relevant
     if root == nil then return jelly.info("not a git repo") end
 
     local dest_fpath = resolve_dest_fpath(root, "gitfiles")
-    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -205,7 +197,7 @@ do -- vim relevant
     if not ok then error(olds) end
 
     local dest_fpath = resolve_dest_fpath("nvim", "olds")
-    if not (use_cached_source and file_exists(dest_fpath)) then
+    if not (use_cached_source and fs.exists(dest_fpath)) then
       if not olds.dump(dest_fpath) then return jelly.err("failed to dump oldfiles") end
     end
 
@@ -258,18 +250,17 @@ do -- lsp relevant
   function M.lsp_document_symbols(use_cached_source, callback)
     local fzf_opts = { pending_unlink = false, with_nth = "2.." }
 
-    local resolver
-    local fpath
+    local resolver, fpath
     do
       local bufnr = api.nvim_get_current_buf()
       local ft = prefer.bo(bufnr, "filetype")
       resolver = lsp_symbol_resolver[ft]
       if resolver == nil then return jelly.info("no symbol handler found for %s", ft) end
-      fpath = vim.fn.fnamemodify(api.nvim_buf_get_name(bufnr), ":p")
+      fpath = assert(bufpath.file(bufnr))
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_document_symbols")
-    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -296,7 +287,7 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_workspace_symbols")
-    if use_cached_source and file_exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end

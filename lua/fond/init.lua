@@ -23,35 +23,10 @@
 
 local M = {}
 
-local coreutils = require("infra.coreutils")
-local highlighter = require("infra.highlighter")
-
 local fzf = require("fond.fzf")
 local handlers = require("fond.handlers")
 local sources = require("fond.sources")
 local state = require("fond.state")
-
-local api = vim.api
-
-do -- module init
-  do -- state.root
-    local root = string.format("/tmp/%s-nvim-fzf", coreutils.whoami())
-    assert(coreutils.mkdir(root, tonumber("700", 8)))
-    state.root = root
-  end
-
-  do -- state.hl_ns
-    state.hl_ns = api.nvim_create_namespace("fzf.floatwin")
-    local hi = highlighter(state.hl_ns)
-    if vim.go.background == "light" then
-      hi("NormalFloat", { fg = 8 })
-      hi("WinSeparator", { fg = 243 })
-    else
-      hi("NormalFloat", { fg = 7 })
-      hi("WinSeparator", { fg = 243 })
-    end
-  end
-end
 
 local function cachable_provider(srcname)
   local source = assert(sources[srcname])

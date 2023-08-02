@@ -11,8 +11,8 @@ local project = require("infra.project")
 local strlib = require("infra.strlib")
 local subprocess = require("infra.subprocess")
 
+local facts = require("fond.facts")
 local lsp_symbol_resolver = require("fond.lsp_symbol_resolver")
-local state = require("fond.state")
 
 local uv = vim.loop
 local api = vim.api
@@ -22,9 +22,8 @@ local api = vim.api
 ---@return string
 local function resolve_dest_fpath(path, use_for)
   assert(path and use_for)
-  assert(state.root)
   local name = string.format("%s-%s", use_for, cthulhu.md5(path))
-  return fs.joinpath(state.root, name)
+  return fs.joinpath(facts.root, name)
 end
 
 local function guarded_callback(callback, ...)

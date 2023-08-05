@@ -90,7 +90,7 @@ return function(src_fpath, last_query, callback, opts)
 
   local bufnr
   do
-    bufnr = api.nvim_create_buf(false, true)
+    bufnr = api.nvim_create_buf(false, true) --no ephemeral here
     prefer.bo(bufnr, "bufhidden", "wipe")
   end
 

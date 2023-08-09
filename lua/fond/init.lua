@@ -3,6 +3,7 @@
 -- * file -> fzf -> stdout (maybe)
 -- * no app abstract: {state, source, handler}; it's over complicated, bloating the code base
 -- * no hard limit for singleton: in my practice, it's over complicated to use mutexes in the callback-based async codes
+-- * always need a tmpfile
 --
 -- file structures
 -- * state: {queries: {sourcer: query}}
@@ -17,8 +18,6 @@
 --    * rg, git grep
 --    * lsp symbol
 --    * treesitter tokens
---
--- todo: avoid unnecessary tmpfile for buffers
 --
 
 local M = {}

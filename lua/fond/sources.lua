@@ -291,7 +291,6 @@ do -- lsp relevant
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
-    -- todo: proper module prefix
     vim.lsp.buf.workspace_symbol("", {
       on_list = function(args)
         local ok = LineWriter(fd)(resolver(args.items))

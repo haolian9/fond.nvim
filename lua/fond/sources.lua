@@ -214,7 +214,7 @@ do -- vim relevant
     assert(callback ~= nil)
     local function source()
       local cur_tab = api.nvim_get_current_tabpage()
-      local tab_iter = fn.filter(function(tab_id) return tab_id ~= cur_tab end, api.nvim_list_tabpages())
+      local tab_iter = fn.filter(function(tabid) return tabid ~= cur_tab end, api.nvim_list_tabpages())
       local win_iter = nil
       local tabnr = nil
 

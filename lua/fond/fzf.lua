@@ -1,4 +1,5 @@
 local bufrename = require("infra.bufrename")
+local dictlib = require("infra.dictlib")
 local ex = require("infra.ex")
 local fn = require("infra.fn")
 local jelly = require("infra.jellyfish")("fzf")
@@ -44,7 +45,7 @@ local function resolve_geometry()
   local row = math.max(win_row - height - 1, 0)
   local col = math.floor(win_width * 0.1)
 
-  return width, height, row, col
+  return { width = width, height = height, row = row, col = col }
 end
 
 ---@param path string @absolute path of outputfile produced by fzf
@@ -96,12 +97,8 @@ return function(src_fpath, last_query, callback, opts)
 
   local winid
   do
-    local width, height, row, col = resolve_geometry()
-    -- stylua: ignore
-    winid = api.nvim_open_win(bufnr, true, {
-      style = "minimal", border = "single", zindex = 250,
-      relative = "win", width = width, height = height, row = row, col = col,
-    })
+    local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250 }, resolve_geometry())
+    winid = api.nvim_open_win(bufnr, true, winopts)
     api.nvim_win_set_hl_ns(winid, facts.hl_ns)
   end
 

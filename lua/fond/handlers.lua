@@ -13,25 +13,32 @@ local state = require("fond.state")
 
 local api = vim.api
 
-local function make_general_handler(srcname, choice_interpreter)
-  if choice_interpreter == nil then
-    -- only the first choice will be accepted
-    choice_interpreter = function(choices) return choices[1] end
+local default_interpreters = {}
+do
+  ---@param action string
+  ---@return string?
+  function default_interpreters.action(action)
+    if action == "ctrl-/" then return "vsplit" end
+    if action == "ctrl-o" then return "split" end
+    if action == "ctrl-m" then return "edit" end
+    if action == "ctrl-t" then return "tabedit" end
+    jelly.warn("no handler for action=%s", action)
   end
+
+  --only the first choice will be accepted
+  ---@param choices string[]
+  function default_interpreters.choice(choices) return choices[1] end
+end
+
+local function make_general_handler(src_name, choice_interpreter, action_interpreter)
+  if choice_interpreter == nil then choice_interpreter = default_interpreters.choice end
+  if action_interpreter == nil then action_interpreter = default_interpreters.action end
   return function(query, action, choices)
-    state.queries[srcname] = query
+    state.queries[src_name] = query
     local choice = choice_interpreter(choices)
-    if action == "ctrl-/" then
-      ex("vsplit", choice)
-    elseif action == "ctrl-o" then
-      ex("split", choice)
-    elseif action == "ctrl-m" then
-      ex("edit", choice)
-    elseif action == "ctrl-t" then
-      ex("tabedit", choice)
-    else
-      jelly.warn("no handler for action=%s", action)
-    end
+    local split = action_interpreter(action)
+    if split == nil then return end
+    ex(split, choice)
   end
 end
 
@@ -60,16 +67,11 @@ do
     return tonumber(parts[1]), tonumber(parts[2])
   end
 
-  local function action_interpreter(action)
-    if action == "ctrl-/" then return "vsplit" end
-    if action == "ctrl-o" then return "split" end
-    if action == "ctrl-m" then return end
-  end
-
   function M.windows(query, action, choices)
     state.queries["windows"] = query
     local src_win_id, src_bufnr = choice_interpreter(choices)
-    local win_open_cmd = action_interpreter(action)
+    local win_open_cmd = default_interpreters.action(action)
+    if win_open_cmd == nil then return end
 
     local src_view
     local src_wo = {}
@@ -78,13 +80,13 @@ do
       for _, opt in ipairs({ "list" }) do
         src_wo[opt] = prefer.wo(src_win_id, opt)
       end
-      -- no considering window-local options
     end)
-    if win_open_cmd ~= nil then ex(win_open_cmd) end
+
+    ex(win_open_cmd, "%")
+
     local winid = api.nvim_get_current_win()
+    api.nvim_win_set_buf(winid, src_bufnr)
     api.nvim_win_call(winid, function()
-      -- it's unnecessary to wrap this line inside win_call, but i like to narrow scope
-      api.nvim_win_set_buf(winid, src_bufnr)
       vim.fn.winrestview(src_view)
       for opt, val in pairs(src_wo) do
         prefer.wo(winid, opt, val)
@@ -105,35 +107,28 @@ do
     return fpath, tonumber(col) - 1, tonumber(row)
   end
 
-  local function action_interpreter(action)
-    if action == "ctrl-/" then return "vsplit" end
-    if action == "ctrl-o" then return "split" end
-    if action == "ctrl-m" then return end
-  end
-
   function M.lsp_document_symbols(query, action, choices)
     state.queries["lsp_document_symbols"] = query
     local _, col, row = choice_interpreter(choices)
-    local win_open_cmd = action_interpreter(action)
+    local win_open_cmd = default_interpreters.action(action)
+    if win_open_cmd == nil then return end
 
     jumplist.push_here()
 
-    if win_open_cmd ~= nil then ex(win_open_cmd) end
-    local winid = api.nvim_get_current_win()
-    api.nvim_win_set_cursor(winid, { row, col })
+    ex(win_open_cmd, "%")
+    api.nvim_win_set_cursor(0, { row, col })
   end
 
   function M.lsp_workspace_symbols(query, action, choices)
     state.queries["lsp_workspace_symbols"] = query
     local fpath, col, row = choice_interpreter(choices)
-    local win_open_cmd = action_interpreter(action)
+    local win_open_cmd = default_interpreters.action(action)
+    if win_open_cmd == nil then return end
 
     jumplist.push_here()
 
-    if win_open_cmd ~= nil then ex(win_open_cmd) end
-    local winid = api.nvim_get_current_win()
-    ex("edit", fpath)
-    api.nvim_win_set_cursor(winid, { row, col })
+    ex(win_open_cmd, fpath)
+    api.nvim_win_set_cursor(0, { row, col })
   end
 end
 
@@ -149,18 +144,10 @@ function M.olds(query, action, choices)
     assert(path and lnum and col)
   end
 
-  if action == "ctrl-/" then
-    ex("vsplit", path)
-  elseif action == "ctrl-o" then
-    ex("split", path)
-  elseif action == "ctrl-m" then
-    ex("edit", path)
-  elseif action == "ctrl-t" then
-    ex("tabedit", path)
-  else
-    jelly.warn("no handler for action=%s", action)
-    return
-  end
+  local win_open_cmd = default_interpreters.action(action)
+  if win_open_cmd == nil then return end
+
+  ex(win_open_cmd, path)
 
   jelly.debug("path=%s, line=%d, col=%d", path, lnum, col)
   api.nvim_win_set_cursor(0, { lnum + 1, col })

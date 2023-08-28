@@ -1,12 +1,11 @@
 local bufrename = require("infra.bufrename")
 local dictlib = require("infra.dictlib")
 local ex = require("infra.ex")
+local rifts = require("infra.rifts")
 local fn = require("infra.fn")
 local jelly = require("infra.jellyfish")("fzf")
 local listlib = require("infra.listlib")
 local prefer = require("infra.prefer")
-
-local facts = require("fond.facts")
 
 local api = vim.api
 local uv = vim.loop
@@ -99,7 +98,7 @@ return function(src_fpath, last_query, callback, opts)
   do
     local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250 }, resolve_geometry())
     winid = api.nvim_open_win(bufnr, true, winopts)
-    api.nvim_win_set_hl_ns(winid, facts.hl_ns)
+    api.nvim_win_set_hl_ns(winid, rifts.ns)
   end
 
   local output_fpath = os.tmpname()

@@ -130,4 +130,5 @@ return {
   zig = resolve_items(zig),
   python = resolve_items(python),
   go = resolve_items(go),
+  cpp = resolve_items(c),
 }

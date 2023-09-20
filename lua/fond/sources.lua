@@ -17,6 +17,9 @@ local lsp_symbol_resolver = require("fond.lsp_symbol_resolver")
 local uv = vim.loop
 local api = vim.api
 
+---@alias fond.Source fun(callback: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
+---@alias fond.CacheableSource fun(use_cached_source: boolean, callback: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
+
 ---@param path string @absolute path
 ---@param use_for string
 ---@return string
@@ -42,7 +45,7 @@ local function guarded_close(fd, callback)
 end
 
 ---@param fd number
----@return fun(lines: string[]): boolean
+---@return fun(lines: string[]|(fun(): string[]?)): boolean
 local function LineWriter(fd)
   return function(lines)
     return guarded_close(fd, function()
@@ -55,6 +58,7 @@ local function LineWriter(fd)
 end
 
 do -- filesystem relevant
+  ---@type fond.CacheableSource
   function M.files(use_cached_source, callback)
     assert(callback ~= nil and use_cached_source ~= nil)
 
@@ -83,6 +87,7 @@ do -- filesystem relevant
     end)
   end
 
+  ---@type fond.CacheableSource
   function M.siblings(use_cached_source, callback)
     assert(callback ~= nil and use_cached_source ~= nil)
 
@@ -112,6 +117,7 @@ do -- filesystem relevant
 end
 
 do -- git relevant
+  ---@type fond.CacheableSource
   function M.git_files(use_cached_source, callback)
     local root = project.git_root()
     if root == nil then return jelly.info("not a git repo") end
@@ -128,6 +134,7 @@ do -- git relevant
     end)
   end
 
+  ---@type fond.Source
   function M.git_modified_files(callback)
     local root = project.git_root()
     if root == nil then return jelly.info("not a git repo") end
@@ -142,6 +149,7 @@ do -- git relevant
     end)
   end
 
+  ---@type fond.Source
   function M.git_status_files(callback)
     local root = project.git_root()
     if root == nil then return jelly.info("not a git repo") end
@@ -158,6 +166,7 @@ do -- git relevant
 end
 
 do -- vim relevant
+  ---@type fond.Source
   function M.buffers(callback)
     assert(callback ~= nil)
 
@@ -166,6 +175,7 @@ do -- vim relevant
     local function resolve_bufname(bufnr)
       if prefer.bo(bufnr, "buftype") ~= "" then return end
       local bufname = api.nvim_buf_get_name(bufnr)
+      if bufname == "" then return end --eg, bufnr=1
       if strlib.find(bufname, "://") then return end
 
       local relative = fs.relative_path(root, bufname)
@@ -189,6 +199,7 @@ do -- vim relevant
     if ok then return guarded_callback(callback, dest_fpath, { pending_unlink = true }) end
   end
 
+  ---@type fond.CacheableSource
   function M.olds(use_cached_source, callback)
     assert(callback ~= nil)
 
@@ -203,6 +214,7 @@ do -- vim relevant
     return guarded_callback(callback, dest_fpath, { pending_unlink = false })
   end
 
+  ---@type fond.Source
   function M.windows(callback)
     -- purposes & implementation details:
     -- * share the same buffer
@@ -245,7 +257,8 @@ do -- vim relevant
 end
 
 do -- lsp relevant
-  -- persistent cache files are good for browsering codebases
+  ---persistent cache files are good for browsering codebases
+  ---@type fond.CacheableSource
   function M.lsp_document_symbols(use_cached_source, callback)
     local fzf_opts = { pending_unlink = false, with_nth = "2.." }
 
@@ -272,6 +285,7 @@ do -- lsp relevant
     })
   end
 
+  ---@type fond.CacheableSource
   function M.lsp_workspace_symbols(use_cached_source, callback)
     local fzf_opts = { pending_unlink = false, with_nth = "2.." }
 

@@ -150,6 +150,7 @@ function M.olds(query, action, choices)
   ex(win_open_cmd, path)
 
   jelly.debug("path=%s, line=%d, col=%d", path, lnum, col)
+  ---todo: handle out of bounds
   api.nvim_win_set_cursor(0, { lnum + 1, col })
 end
 

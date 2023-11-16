@@ -28,7 +28,9 @@ local sources = require("fond.sources")
 local state = require("fond.state")
 
 local function cachable_provider(srcname)
+  ---@type fond.CacheableSource
   local source = assert(sources[srcname])
+  ---@type fond.fzf.Handler
   local handler = assert(handlers[srcname])
 
   ---@param use_cached_source ?boolean
@@ -45,6 +47,7 @@ local function cachable_provider(srcname)
 end
 
 local function fresh_provider(srcname)
+  ---@type fond.Source
   local source = assert(sources[srcname])
   local handler = assert(handlers[srcname])
 
@@ -61,6 +64,7 @@ M.tracked = cachable_provider("git_files")
 M.document_symbols = cachable_provider("lsp_document_symbols")
 M.workspace_symbols = cachable_provider("lsp_workspace_symbols")
 M.olds = cachable_provider("olds")
+M.ctags = cachable_provider("ctags_file")
 
 M.buffers = fresh_provider("buffers")
 M.modified = fresh_provider("git_modified_files")

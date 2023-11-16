@@ -4,7 +4,7 @@ local cthulhu = require("cthulhu")
 local bufpath = require("infra.bufpath")
 local fn = require("infra.fn")
 local fs = require("infra.fs")
-local jelly = require("infra.jellyfish")("fzf.sources")
+local jelly = require("infra.jellyfish")("fzf.sources", "info")
 local listlib = require("infra.listlib")
 local prefer = require("infra.prefer")
 local project = require("infra.project")
@@ -17,8 +17,8 @@ local lsp_symbol_resolver = require("fond.lsp_symbol_resolver")
 local uv = vim.loop
 local api = vim.api
 
----@alias fond.Source fun(callback: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
----@alias fond.CacheableSource fun(use_cached_source: boolean, callback: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
+---@alias fond.Source fun(fzf: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
+---@alias fond.CacheableSource fun(use_cached_source: boolean, fzf: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
 
 ---@param path string @absolute path
 ---@param use_for string
@@ -29,16 +29,16 @@ local function resolve_dest_fpath(path, use_for)
   return fs.joinpath(facts.root, name)
 end
 
-local function guarded_callback(callback, ...)
-  local ok, err = xpcall(callback, debug.traceback, ...)
+local function guarded_call(f, ...)
+  local ok, err = xpcall(f, debug.traceback, ...)
   if not ok then vim.schedule(function() jelly.err(err) end) end
 end
 
 ---@param fd number
----@param callback fun()
+---@param f fun()
 ---@return boolean
-local function guarded_close(fd, callback)
-  local ok, err = xpcall(callback, debug.traceback)
+local function guarded_close(fd, f)
+  local ok, err = xpcall(f, debug.traceback)
   uv.fs_close(fd)
   if not ok then vim.schedule(function() jelly.warn(err) end) end
   return ok
@@ -59,14 +59,14 @@ end
 
 do -- filesystem relevant
   ---@type fond.CacheableSource
-  function M.files(use_cached_source, callback)
-    assert(callback ~= nil and use_cached_source ~= nil)
+  function M.files(use_cached_source, fzf)
+    assert(fzf ~= nil and use_cached_source ~= nil)
 
     local root = project.working_root()
     if root == nil then return end
 
     local dest_fpath = resolve_dest_fpath(root, "files")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end
@@ -82,18 +82,18 @@ do -- filesystem relevant
     }
 
     subprocess.spawn("fd", { args = fd_args, cwd = root }, LineWriter(fd), function(code)
-      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+      if code == 0 then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
 
   ---@type fond.CacheableSource
-  function M.siblings(use_cached_source, callback)
-    assert(callback ~= nil and use_cached_source ~= nil)
+  function M.siblings(use_cached_source, fzf)
+    assert(fzf ~= nil and use_cached_source ~= nil)
 
     local root = vim.fn.expand("%:p:h")
     local dest_fpath = resolve_dest_fpath(root, "siblings")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
     -- stylua: ignore
     local fd_args = {
@@ -110,7 +110,7 @@ do -- filesystem relevant
     if open_err ~= nil then error(open_err) end
 
     subprocess.spawn("fd", { args = fd_args, cwd = root }, LineWriter(fd), function(code)
-      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+      if code == 0 then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
@@ -118,24 +118,24 @@ end
 
 do -- git relevant
   ---@type fond.CacheableSource
-  function M.git_files(use_cached_source, callback)
+  function M.git_files(use_cached_source, fzf)
     local root = project.git_root()
     if root == nil then return jelly.info("not a git repo") end
 
     local dest_fpath = resolve_dest_fpath(root, "gitfiles")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
 
     subprocess.spawn("git", { args = { "ls-files" }, cwd = root }, LineWriter(fd), function(code)
-      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = false }) end
+      if code == 0 then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
 
   ---@type fond.Source
-  function M.git_modified_files(callback)
+  function M.git_modified_files(fzf)
     local root = project.git_root()
     if root == nil then return jelly.info("not a git repo") end
 
@@ -144,13 +144,13 @@ do -- git relevant
     if open_err ~= nil then return jelly.err(open_err) end
 
     subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, LineWriter(fd), function(code)
-      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = true }) end
+      if code == 0 then return guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
 
   ---@type fond.Source
-  function M.git_status_files(callback)
+  function M.git_status_files(fzf)
     local root = project.git_root()
     if root == nil then return jelly.info("not a git repo") end
 
@@ -159,7 +159,7 @@ do -- git relevant
     if open_err ~= nil then return jelly.err(open_err) end
 
     subprocess.spawn("git", { args = { "status", "--porcelain=v1" }, cwd = root }, LineWriter(fd), function(code)
-      if code == 0 then return guarded_callback(callback, dest_fpath, { pending_unlink = true }) end
+      if code == 0 then return guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
       jelly.err("fd failed: exit code=%d", code)
     end)
   end
@@ -167,8 +167,8 @@ end
 
 do -- vim relevant
   ---@type fond.Source
-  function M.buffers(callback)
-    assert(callback ~= nil)
+  function M.buffers(fzf)
+    assert(fzf ~= nil)
 
     local root = project.working_root()
 
@@ -196,12 +196,12 @@ do -- vim relevant
       end
     end)
 
-    if ok then return guarded_callback(callback, dest_fpath, { pending_unlink = true }) end
+    if ok then return guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
   end
 
   ---@type fond.CacheableSource
-  function M.olds(use_cached_source, callback)
-    assert(callback ~= nil)
+  function M.olds(use_cached_source, fzf)
+    assert(fzf ~= nil)
 
     local ok, olds = pcall(require, "olds")
     if not ok then error(olds) end
@@ -211,11 +211,11 @@ do -- vim relevant
       if not olds.dump(dest_fpath) then return jelly.err("failed to dump oldfiles") end
     end
 
-    return guarded_callback(callback, dest_fpath, { pending_unlink = false })
+    return guarded_call(fzf, dest_fpath, { pending_unlink = false })
   end
 
   ---@type fond.Source
-  function M.windows(callback)
+  function M.windows(fzf)
     -- purposes & implementation details:
     -- * share the same buffer
     -- * share the same window view: cursor, top/bot line
@@ -223,7 +223,7 @@ do -- vim relevant
     -- * cloned window does not inherit options, event&autocmd, variables from the original window
     --
 
-    assert(callback ~= nil)
+    assert(fzf ~= nil)
     local function source()
       local cur_tab = api.nvim_get_current_tabpage()
       local tab_iter = fn.filter(function(tabid) return tabid ~= cur_tab end, api.nvim_list_tabpages())
@@ -252,14 +252,14 @@ do -- vim relevant
     if open_err ~= nil then return jelly.err(open_err) end
     -- (winid,bufnr bufname)
     local ok = LineWriter(fd)(source())
-    if ok then return guarded_callback(callback, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
+    if ok then return guarded_call(fzf, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
   end
 end
 
 do -- lsp relevant
   ---persistent cache files are good for browsering codebases
   ---@type fond.CacheableSource
-  function M.lsp_document_symbols(use_cached_source, callback)
+  function M.lsp_document_symbols(use_cached_source, fzf)
     local fzf_opts = { pending_unlink = false, with_nth = "2.." }
 
     local resolver, fpath
@@ -272,7 +272,7 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_document_symbols")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -280,17 +280,16 @@ do -- lsp relevant
     vim.lsp.buf.document_symbol({
       on_list = function(args)
         local ok = LineWriter(fd)(resolver(args.items))
-        if ok then return guarded_callback(callback, dest_fpath, fzf_opts) end
+        if ok then return guarded_call(fzf, dest_fpath, fzf_opts) end
       end,
     })
   end
 
   ---@type fond.CacheableSource
-  function M.lsp_workspace_symbols(use_cached_source, callback)
+  function M.lsp_workspace_symbols(use_cached_source, fzf)
     local fzf_opts = { pending_unlink = false, with_nth = "2.." }
 
-    local resolver
-    local fpath
+    local resolver, fpath
     do
       local bufnr = api.nvim_get_current_buf()
       local ft = prefer.bo(bufnr, "filetype")
@@ -300,7 +299,7 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_workspace_symbols")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_callback(callback, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -308,10 +307,39 @@ do -- lsp relevant
     vim.lsp.buf.workspace_symbol("", {
       on_list = function(args)
         local ok = LineWriter(fd)(resolver(args.items))
-        if ok then return guarded_callback(callback, dest_fpath, fzf_opts) end
+        if ok then return guarded_call(fzf, dest_fpath, fzf_opts) end
       end,
     })
   end
+end
+
+---@type fond.CacheableSource
+function M.ctags_file(use_cached_source, fzf)
+  local fzf_opts = { pending_unlink = false }
+
+  local bufnr = api.nvim_get_current_buf()
+  local fpath = assert(bufpath.file(bufnr))
+
+  local dest_fpath = resolve_dest_fpath(fpath, "ctags")
+  if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
+
+  local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
+  if open_err ~= nil then error(open_err) end
+
+  -- stylua: ignore
+  local ctags_args = {
+    "-o", "-",
+    "--output-format=json",
+    "--sort=no",
+    fpath,
+  }
+
+  jelly.debug("ctags: %s", ctags_args)
+
+  subprocess.spawn("ctags", { args = ctags_args }, LineWriter(fd), function(code)
+    if code == 0 then return guarded_call(fzf, dest_fpath, fzf_opts) end
+    jelly.err("ctags failed: exit code=%d", code)
+  end)
 end
 
 return M

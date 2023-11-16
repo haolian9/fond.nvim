@@ -30,6 +30,7 @@ do
   function default_interpreters.choice(choices) return choices[1] end
 end
 
+---@return fond.fzf.Handler
 local function make_general_handler(src_name, choice_interpreter, action_interpreter)
   if choice_interpreter == nil then choice_interpreter = default_interpreters.choice end
   if action_interpreter == nil then action_interpreter = default_interpreters.action end
@@ -67,6 +68,7 @@ do
     return tonumber(parts[1]), tonumber(parts[2])
   end
 
+  ---@type fond.fzf.Handler
   function M.windows(query, action, choices)
     state.queries["windows"] = query
     local src_win_id, src_bufnr = choice_interpreter(choices)
@@ -107,6 +109,7 @@ do
     return fpath, tonumber(col) - 1, tonumber(row)
   end
 
+  ---@type fond.fzf.Handler
   function M.lsp_document_symbols(query, action, choices)
     state.queries["lsp_document_symbols"] = query
     local _, col, row = choice_interpreter(choices)
@@ -119,6 +122,7 @@ do
     api.nvim_win_set_cursor(0, { row, col })
   end
 
+  ---@type fond.fzf.Handler
   function M.lsp_workspace_symbols(query, action, choices)
     state.queries["lsp_workspace_symbols"] = query
     local fpath, col, row = choice_interpreter(choices)
@@ -132,6 +136,7 @@ do
   end
 end
 
+---@type fond.fzf.Handler
 function M.olds(query, action, choices)
   state.queries["olds"] = query
 
@@ -152,6 +157,13 @@ function M.olds(query, action, choices)
   jelly.debug("path=%s, line=%d, col=%d", path, lnum, col)
   ---todo: handle out of bounds
   api.nvim_win_set_cursor(0, { lnum + 1, col })
+end
+
+---@type fond.fzf.Handler
+function M.ctags_file(query, action, choices)
+  state.queries["ctags"] = query
+
+  jelly.info("query='%s', action='%s', choices='%s'", query, action, choices)
 end
 
 return M

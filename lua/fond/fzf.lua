@@ -1,11 +1,11 @@
 local bufrename = require("infra.bufrename")
 local dictlib = require("infra.dictlib")
 local ex = require("infra.ex")
-local rifts = require("infra.rifts")
 local fn = require("infra.fn")
 local jelly = require("infra.jellyfish")("fzf")
 local listlib = require("infra.listlib")
 local prefer = require("infra.prefer")
+local rifts = require("infra.rifts")
 
 local api = vim.api
 local uv = vim.loop
@@ -72,20 +72,23 @@ local function parse_output_file(path)
 end
 
 ---@class fond.fzf.Opts
----@field pending_unlink? boolean
----@field source_length? number
+---@field pending_unlink?   boolean
+---@field source_length?    number
 ---@field source_max_width? number
----@field with_nth? number @same to fzf --with-nth
+---@field with_nth?         number @'fzf --with-nth'
+---@field prompt?           string @'fzf --prompt'
+
+---@alias fond.fzf.Handler fun(query: string, action: string, choices: string[])
 
 ---@param opts fond.fzf.Opts
 local function fulfill_opts(opts) opts.pending_unlink = fn.nilor(opts.pending_unlink, false) end
 
 ---@param src_fpath string
 ---@param last_query? string
----@param callback fun(query: string, action: string, choices: string[])
+---@param handler fond.fzf.Handler
 ---@param opts fond.fzf.Opts
-return function(src_fpath, last_query, callback, opts)
-  assert(callback ~= nil)
+return function(src_fpath, last_query, handler, opts)
+  assert(handler ~= nil)
   fulfill_opts(opts)
 
   local bufnr
@@ -115,6 +118,10 @@ return function(src_fpath, last_query, callback, opts)
       table.insert(cmd, "--with-nth")
       table.insert(cmd, opts.with_nth)
     end
+    if opts.prompt ~= nil then
+      table.insert(cmd, "--prompt")
+      table.insert(cmd, opts.prompt)
+    end
   end
 
   local job_id = vim.fn.termopen(cmd, {
@@ -129,7 +136,7 @@ return function(src_fpath, last_query, callback, opts)
       local query, action, choices = parse_output_file(output_fpath)
       if not (query and action and choices) then return end
 
-      local cb_ok, cb_err = xpcall(callback, debug.traceback, query, action, choices)
+      local cb_ok, cb_err = xpcall(handler, debug.traceback, query, action, choices)
       uv.fs_unlink(output_fpath)
       if opts.pending_unlink then uv.fs_unlink(src_fpath) end
       if not cb_ok then jelly.err("fzf callback error: %s", cb_err) end

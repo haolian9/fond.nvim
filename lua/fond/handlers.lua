@@ -68,11 +68,19 @@ do
     return tonumber(parts[1]), tonumber(parts[2])
   end
 
+  local function action_interpreter(action)
+    if action == "ctrl-/" then return "vsplit" end
+    if action == "ctrl-o" then return "split" end
+    if action == "ctrl-m" then return "vsplit" end
+    if action == "ctrl-t" then return jelly.warn("unreasonable action for fond.windows: <c-t>") end
+    jelly.warn("unexpected action for fond.windows: %s", action)
+  end
+
   ---@type fond.fzf.Handler
   function M.windows(query, action, choices)
     state.queries["windows"] = query
     local src_win_id, src_bufnr = choice_interpreter(choices)
-    local win_open_cmd = default_interpreters.action(action)
+    local win_open_cmd = action_interpreter(action)
     if win_open_cmd == nil then return end
 
     local src_view
@@ -84,7 +92,7 @@ do
       end
     end)
 
-    ex(win_open_cmd, "%")
+    ex(win_open_cmd)
 
     local winid = api.nvim_get_current_win()
     api.nvim_win_set_buf(winid, src_bufnr)
@@ -164,6 +172,22 @@ function M.ctags_file(query, action, choices)
   state.queries["ctags"] = query
 
   jelly.info("query='%s', action='%s', choices='%s'", query, action, choices)
+
+  local col
+  do
+    local line = choices[1]
+    col = string.match(line, ":(%d+)$")
+    col = tonumber(col)
+    assert(col)
+  end
+
+  local win_open_cmd = default_interpreters.action(action)
+  if win_open_cmd == nil then return end
+
+  jumplist.push_here()
+
+  ex(win_open_cmd, "%")
+  api.nvim_win_set_cursor(0, { col, 0 })
 end
 
 return M

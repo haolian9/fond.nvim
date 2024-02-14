@@ -169,7 +169,7 @@ end
 
 ---@type fond.fzf.Handler
 function M.ctags_file(query, action, choices)
-  state.queries["ctags"] = query
+  state.queries["ctags_file"] = query
 
   jelly.info("query='%s', action='%s', choices='%s'", query, action, choices)
 

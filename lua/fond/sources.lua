@@ -166,13 +166,11 @@ do -- git relevant
 end
 
 do -- vim relevant
-  ---@type fond.Source
-  function M.buffers(fzf)
-    assert(fzf ~= nil)
-
-    local root = project.working_root()
-
-    local function resolve_bufname(bufnr)
+  do
+    ---@param root string
+    ---@param bufnr integer
+    ---@return string?
+    local function resolve_bufname(root, bufnr)
       if prefer.bo(bufnr, "buftype") ~= "" then return end
       local bufname = api.nvim_buf_get_name(bufnr)
       if bufname == "" then return end --eg, bufnr=1
@@ -182,21 +180,28 @@ do -- vim relevant
       return relative or bufname
     end
 
-    local dest_fpath = os.tmpname()
-    local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-    if open_err ~= nil then return jelly.err(open_err) end
+    ---@type fond.Source
+    function M.buffers(fzf)
+      assert(fzf ~= nil)
 
-    local ok = guarded_close(fd, function()
-      for _, bufnr in ipairs(api.nvim_list_bufs()) do
-        local bufname = resolve_bufname(bufnr)
-        if bufname ~= nil then
-          uv.fs_write(fd, bufname)
-          uv.fs_write(fd, "\n")
+      local root = project.working_root()
+
+      local dest_fpath = os.tmpname()
+      local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
+      if open_err ~= nil then return jelly.err(open_err) end
+
+      local ok = guarded_close(fd, function()
+        for _, bufnr in ipairs(api.nvim_list_bufs()) do
+          local bufname = resolve_bufname(root, bufnr)
+          if bufname ~= nil then
+            uv.fs_write(fd, bufname)
+            uv.fs_write(fd, "\n")
+          end
         end
-      end
-    end)
+      end)
 
-    if ok then return guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
+      if ok then return guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
+    end
   end
 
   ---@type fond.CacheableSource
@@ -214,16 +219,8 @@ do -- vim relevant
     return guarded_call(fzf, dest_fpath, { pending_unlink = false })
   end
 
-  ---@type fond.Source
-  function M.windows(fzf)
-    -- purposes & implementation details:
-    -- * share the same buffer
-    -- * share the same window view: cursor, top/bot line
-    -- * keep the original window unspoiled
-    -- * cloned window does not inherit options, event&autocmd, variables from the original window
-    --
-
-    assert(fzf ~= nil)
+  do
+    ---@return fun(): string? @'winid,bufnr tabnr:winnr bufname'
     local function source()
       local cur_tab = api.nvim_get_current_tabpage()
       local tab_iter = fn.filter(function(tabid) return tabid ~= cur_tab end, api.nvim_list_tabpages())
@@ -241,18 +238,26 @@ do -- vim relevant
           local bufnr = api.nvim_win_get_buf(winid)
           local winnr = api.nvim_win_get_number(winid)
           local bufname = api.nvim_buf_get_name(bufnr)
-          -- winid,bufnr tabnr:winnr bufname
           return string.format("%d,%d %d,%d - %s", winid, bufnr, tabnr, winnr, bufname)
         end
       end
     end
 
-    local dest_fpath = os.tmpname()
-    local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-    if open_err ~= nil then return jelly.err(open_err) end
-    -- (winid,bufnr bufname)
-    local ok = LineWriter(fd)(source())
-    if ok then return guarded_call(fzf, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
+    --purposes & implementation details:
+    --* share the same buffer
+    --* share the same window view: cursor, top/bot line
+    --* keep the original window unspoiled
+    --* cloned window does not inherit options, event&autocmd, variables from the original window
+    ---@type fond.Source
+    function M.windows(fzf)
+      assert(fzf ~= nil)
+
+      local dest_fpath = os.tmpname()
+      local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
+      if open_err ~= nil then return jelly.err(open_err) end
+      local ok = LineWriter(fd)(source())
+      if ok then return guarded_call(fzf, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
+    end
   end
 end
 

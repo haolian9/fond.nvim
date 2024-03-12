@@ -162,9 +162,18 @@ function M.olds(query, action, choices)
 
   ex(win_open_cmd, path)
 
-  jelly.debug("path=%s, line=%d, col=%d", path, lnum, col)
-  ---todo: handle out of bounds
-  api.nvim_win_set_cursor(0, { lnum + 1, col })
+  do --goto that position
+    jelly.debug("path=%s, line=%d, col=%d", path, lnum, col)
+    local winid = api.nvim_get_current_win()
+    local row_max = api.nvim_buf_line_count(api.nvim_win_get_buf(winid))
+    local row = lnum + 1
+    if row <= row_max then
+      api.nvim_win_set_cursor(winid, { row, col })
+    else
+      jelly.warn("goto last line, as #%d line no longer exists", lnum)
+      api.nvim_win_set_cursor(winid, { row_max, col })
+    end
+  end
 end
 
 ---@type fond.fzf.Handler

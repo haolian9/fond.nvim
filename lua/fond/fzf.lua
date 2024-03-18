@@ -100,7 +100,7 @@ return function(src_fpath, last_query, handler, opts)
   local winid
   do
     local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250 }, resolve_geometry())
-    winid = api.nvim_open_win(bufnr, true, winopts)
+    winid = rifts.open.win(bufnr, true, winopts)
     api.nvim_win_set_hl_ns(winid, rifts.ns)
   end
 

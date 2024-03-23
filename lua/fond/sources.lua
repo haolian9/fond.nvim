@@ -66,7 +66,7 @@ do -- filesystem relevant
     if root == nil then return end
 
     local dest_fpath = resolve_dest_fpath(root, "files")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.file_exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end
@@ -93,7 +93,7 @@ do -- filesystem relevant
 
     local root = vim.fn.expand("%:p:h")
     local dest_fpath = resolve_dest_fpath(root, "siblings")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.file_exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
     -- stylua: ignore
     local fd_args = {
@@ -123,7 +123,7 @@ do -- git relevant
     if root == nil then return jelly.info("not a git repo") end
 
     local dest_fpath = resolve_dest_fpath(root, "gitfiles")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
+    if use_cached_source and fs.file_exists(dest_fpath) then return guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -212,7 +212,7 @@ do -- vim relevant
     if not ok then error(olds) end
 
     local dest_fpath = resolve_dest_fpath("nvim", "olds")
-    if not (use_cached_source and fs.exists(dest_fpath)) then
+    if not (use_cached_source and fs.file_exists(dest_fpath)) then
       if not olds.dump(dest_fpath) then return jelly.err("failed to dump oldfiles") end
     end
 
@@ -277,7 +277,7 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_document_symbols")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.file_exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -304,7 +304,7 @@ do -- lsp relevant
     end
 
     local dest_fpath = resolve_dest_fpath(fpath, "lsp_workspace_symbols")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.file_exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then return jelly.err(open_err) end
@@ -396,7 +396,7 @@ do --ctags relevant
     local fpath = assert(bufpath.file(bufnr))
 
     local dest_fpath = resolve_dest_fpath(fpath, "ctags")
-    if use_cached_source and fs.exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
+    if use_cached_source and fs.file_exists(dest_fpath) then return guarded_call(fzf, dest_fpath, fzf_opts) end
 
     local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
     if open_err ~= nil then error(open_err) end

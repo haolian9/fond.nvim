@@ -39,10 +39,30 @@ local function resolve_geometry()
   -- takes folding into account
   local win_row = vim.fn.winline()
 
-  local width = math.floor(win_width * 0.75)
-  local height = math.floor(win_height * 0.3)
-  local row = math.max(win_row - height - 1, 0)
-  local col = math.floor(win_width * 0.1)
+  --below magic numbers are based on
+  --* urxvt, width=136, height=30
+  --* st, width=174, height=39
+
+  local width, col
+  if win_width > 70 then
+    width = math.floor(win_width * 0.6)
+    col = math.floor(win_width * 0.2)
+  elseif win_width > 45 then
+    width = math.floor(win_width * 0.75)
+    col = math.floor(win_width * 0.125)
+  else
+    width = win_width - 2 -- borders
+    col = 0
+  end
+
+  local height, row
+  if win_height > 15 then
+    height = math.floor(win_height * 0.45)
+    row = math.max(win_row - height - 1, 0)
+  else
+    height = win_height - 2 -- borders
+    row = 0
+  end
 
   return { width = width, height = height, row = row, col = col }
 end

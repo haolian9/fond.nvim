@@ -85,23 +85,19 @@ do
 
     local src_view
     local src_wo = {}
-    api.nvim_win_call(src_win_id, function()
-      src_view = vim.fn.winsaveview()
-      for _, opt in ipairs({ "list" }) do
-        src_wo[opt] = prefer.wo(src_win_id, opt)
-      end
-    end)
+    api.nvim_win_call(src_win_id, function() src_view = vim.fn.winsaveview() end)
+    for _, opt in ipairs({ "list" }) do
+      src_wo[opt] = prefer.wo(src_win_id, opt)
+    end
 
     ex(win_open_cmd)
 
     local winid = api.nvim_get_current_win()
     api.nvim_win_set_buf(winid, src_bufnr)
-    api.nvim_win_call(winid, function()
-      vim.fn.winrestview(src_view)
-      for opt, val in pairs(src_wo) do
-        prefer.wo(winid, opt, val)
-      end
-    end)
+    vim.fn.winrestview(src_view)
+    for opt, val in pairs(src_wo) do
+      prefer.wo(winid, opt, val)
+    end
   end
 end
 

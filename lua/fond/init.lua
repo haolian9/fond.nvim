@@ -22,23 +22,22 @@
 
 local M = {}
 
-local fzf = require("fond.fzf")
-local handlers = require("fond.handlers")
-local sources = require("fond.sources")
-local state = require("fond.state")
-
-local function cachable_provider(srcname)
-  ---@type fond.CacheableSource
-  local source = assert(sources[srcname])
-  ---@type fond.fzf.Handler
-  local handler = assert(handlers[srcname])
-
+---@param name string
+local function cachable_provider(name)
   ---@param use_cached_source ?boolean
   ---@param use_last_query ?boolean
   return function(use_cached_source, use_last_query)
+    local state = require("fond.state")
+    local fzf = require("fond.fzf")
+
+    ---@type fond.CacheableSource
+    local source = require(string.format("fond.sources.%s", name))
+    ---@type fond.fzf.Handler
+    local handler = require(string.format("fond.handlers.%s", name))
+
     if use_cached_source == nil then use_cached_source = true end
     if use_last_query == nil then use_last_query = true end
-    local last_query = use_last_query and state.queries[srcname] or nil
+    local last_query = use_last_query and state.queries[name] or nil
 
     source(use_cached_source, function(src_fpath, fzf_opts)
       vim.schedule(function() fzf(src_fpath, last_query, handler, fzf_opts) end)
@@ -46,12 +45,16 @@ local function cachable_provider(srcname)
   end
 end
 
-local function fresh_provider(srcname)
-  ---@type fond.Source
-  local source = assert(sources[srcname])
-  local handler = assert(handlers[srcname])
-
+---@param name string
+local function fresh_provider(name)
   return function()
+    local fzf = require("fond.fzf")
+
+    ---@type fond.Source
+    local source = require(string.format("fond.sources.%s", name))
+    ---@type fond.fzf.Handler
+    local handler = require(string.format("fond.handlers.%s", name))
+
     source(function(src_fpath, fzf_opts)
       vim.schedule(function() fzf(src_fpath, nil, handler, fzf_opts) end)
     end)

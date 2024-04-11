@@ -1,0 +1,2 @@
+---@alias fond.Source fun(fzf: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))
+---@alias fond.CacheableSource fun(use_cached_source: boolean, fzf: fun(dest_fpath: string, fzf_opts: fond.fzf.Opts))

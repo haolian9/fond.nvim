@@ -25,7 +25,8 @@ do
     "--print-query",
     "--bind", "char:unbind(char)+clear-query+put", -- placeholder&clear
     "--bind", "ctrl-/:accept,ctrl-o:accept,ctrl-t:accept,space:accept", -- keys to accept
-    "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space",
+    "--bind", "ctrl-f:accept", -- accept but should be sent to the qflist
+    "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space,ctrl-f",
     "--color", colors,
   })
 end

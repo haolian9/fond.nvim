@@ -1,10 +1,6 @@
--- resolver: fn(items) string
--- * items: [{col, lnum, kind, filename, text}]; see lsp-on-list-handler
--- * return string: "{filename},{row},{col}, {symbol} {text}"
---
--- when the result not satisfies you, changes those resolver according to the `vim.lsp.buf.document_symbol()`
---
+local M = {}
 
+local jelly = require("infra.jellyfish")("fond.sources.LspSymbolResolver", "debug")
 local listlib = require("infra.listlib")
 local strlib = require("infra.strlib")
 
@@ -19,6 +15,14 @@ local symbols = {
 
 ---@alias Kind 'Function'|'Method'|'Struct'|'Class'
 ---@alias Item {col: number, lnum: number, kind: Kind, filename: string, text: string}
+
+-- resolver: fn(items) string
+-- * items: [{col, lnum, kind, filename, text}]; see lsp-on-list-handler
+-- * return string: "{filename},{row},{col}, {symbol} {text}"
+--
+-- when the result not satisfies you, changes those resolver according to the `vim.lsp.buf.document_symbol()`
+--
+---@alias Resolver fun(items: Item[]): fun(): string?
 
 ---@param item Item
 ---@return string
@@ -49,9 +53,8 @@ local function resolve_items(line_resolver)
   end
 end
 
----@param item Item
----@return string?
-local function lua(item)
+---@type Resolver
+M.lua = resolve_items(function(item)
   local symbol
   if item.kind == "Variable" then
     -- ok: M.foo
@@ -66,11 +69,9 @@ local function lua(item)
   end
 
   return normalize_line(item, symbol)
-end
+end)
 
----@param item Item
----@return string?
-local function c(item)
+M.c = resolve_items(function(item)
   if item.kind == "Struct" or item.kind == "Class" then
     -- no: anony struct
     if strlib.endswith(item.text, "(anonymous struct)") then return end
@@ -83,11 +84,9 @@ local function c(item)
     return
   end
   return normalize_line(item)
-end
+end)
 
----@param item Item
----@return string?
-local function zig(item)
+M.zig = resolve_items(function(item)
   local symbol
   if item.kind == "Function" then
   elseif item.kind == "Struct" or item.kind == "Enum" then
@@ -100,35 +99,24 @@ local function zig(item)
     return
   end
   return normalize_line(item, symbol)
-end
+end)
 
----@param item Item
----@return string?
-local function python(item)
+M.python = resolve_items(function(item)
   if item.kind == "Function" or item.kind == "Method" then
   elseif item.kind == "Class" then
   else
     return
   end
   return normalize_line(item)
-end
+end)
 
----@param item Item
----@return string?
-local function go(item)
+M.go = resolve_items(function(item)
   if item.kind == "Function" or item.kind == "Method" then
   elseif item.kind == "Struct" then
   else
     return
   end
   return normalize_line(item)
-end
+end)
 
-return {
-  lua = resolve_items(lua),
-  c = resolve_items(c),
-  zig = resolve_items(zig),
-  python = resolve_items(python),
-  go = resolve_items(go),
-  cpp = resolve_items(c),
-}
+return M

@@ -1,6 +1,5 @@
 local M = {}
 
-local jelly = require("infra.jellyfish")("fond.sources.LspSymbolResolver", "debug")
 local listlib = require("infra.listlib")
 local strlib = require("infra.strlib")
 

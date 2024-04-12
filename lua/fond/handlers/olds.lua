@@ -1,3 +1,4 @@
+local buflines = require("infra.buflines")
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("fzf.handlers.olds")
 local jumplist = require("infra.jumplist")
@@ -31,7 +32,7 @@ do
     do --goto that position
       jelly.debug("path=%s, line=%d, col=%d", fpath, lnum, col)
       local winid = api.nvim_get_current_win()
-      local row_max = api.nvim_buf_line_count(api.nvim_win_get_buf(winid))
+      local row_max = buflines.count(api.nvim_win_get_buf(winid))
       local row = lnum + 1
       if row <= row_max then
         api.nvim_win_set_cursor(winid, { row, col })

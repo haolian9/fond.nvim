@@ -86,7 +86,7 @@ return function(use_cached_source, fzf)
 
   local fpath = assert(bufpath.file(bufnr))
 
-  local dest_fpath = infra.resolve_dest_fpath(fpath, "ctags")
+  local dest_fpath = infra.resolve_dest_fpath(fpath, "ctags_file")
   if use_cached_source and fs.file_exists(dest_fpath) then return infra.guarded_call(fzf, dest_fpath, fzf_opts) end
 
   local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))

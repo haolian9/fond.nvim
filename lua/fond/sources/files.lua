@@ -22,7 +22,6 @@ return function(use_cached_source, fzf)
   assert(fzf ~= nil and use_cached_source ~= nil)
 
   local root = project.working_root()
-  if root == nil then return end
 
   local dest_fpath = infra.resolve_dest_fpath(root, "files")
   if use_cached_source and fs.file_exists(dest_fpath) then return infra.guarded_call(fzf, dest_fpath, { pending_unlink = false }) end

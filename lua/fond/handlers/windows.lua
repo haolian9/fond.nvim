@@ -1,3 +1,4 @@
+local ctx = require("infra.ctx")
 local ex = require("infra.ex")
 local fn = require("infra.fn")
 local jelly = require("infra.jellyfish")("fzf.handlers.windows")
@@ -27,7 +28,7 @@ do
   local function main(split, src_winid, src_bufnr)
     local src_view
     local src_wo = {}
-    api.nvim_win_call(src_winid, function() src_view = vim.fn.winsaveview() end)
+    ctx.win(src_winid, function() src_view = vim.fn.winsaveview() end)
     for _, opt in ipairs({ "list" }) do
       src_wo[opt] = prefer.wo(src_winid, opt)
     end

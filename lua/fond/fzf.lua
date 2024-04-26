@@ -84,7 +84,7 @@ local function parse_output_file(path)
 
   local choices = {}
   for line in iter do
-    if #line == 0 then break end
+    if line == "" then break end
     table.insert(choices, line)
   end
   if #choices == 0 then return end

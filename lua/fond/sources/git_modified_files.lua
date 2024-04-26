@@ -2,7 +2,7 @@ local jelly = require("infra.jellyfish")("fond.sources.git_modified_files", "deb
 local project = require("infra.project")
 local subprocess = require("infra.subprocess")
 
-local infra = require("fond.sources.infra")
+local aux = require("fond.sources.aux")
 
 local uv = vim.loop
 
@@ -15,8 +15,8 @@ return function(fzf)
   local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
   if open_err ~= nil then return jelly.err(open_err) end
 
-  subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, infra.LineWriter(fd), function(code)
-    if code == 0 then return infra.guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
+  subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, aux.LineWriter(fd), function(code)
+    if code == 0 then return aux.guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
     jelly.err("fd failed: exit code=%d", code)
   end)
 end

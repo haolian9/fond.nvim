@@ -2,7 +2,7 @@ local fn = require("infra.fn")
 local jelly = require("infra.jellyfish")("fond.sources.windows", "debug")
 local listlib = require("infra.listlib")
 
-local infra = require("fond.sources.infra")
+local aux = require("fond.sources.aux")
 
 local api = vim.api
 local uv = vim.loop
@@ -43,6 +43,6 @@ return function(fzf)
   local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
   if open_err ~= nil then return jelly.err(open_err) end
 
-  local ok = infra.LineWriter(fd)(source())
-  if ok then return infra.guarded_call(fzf, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
+  local ok = aux.LineWriter(fd)(source())
+  if ok then return aux.guarded_call(fzf, dest_fpath, { pending_unlink = true, with_nth = "2.." }) end
 end

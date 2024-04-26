@@ -4,7 +4,7 @@ local prefer = require("infra.prefer")
 local project = require("infra.project")
 local strlib = require("infra.strlib")
 
-local infra = require("fond.sources.infra")
+local aux = require("fond.sources.aux")
 
 local uv = vim.loop
 local api = vim.api
@@ -32,7 +32,7 @@ return function(fzf)
   local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
   if open_err ~= nil then return jelly.err(open_err) end
 
-  local ok = infra.guarded_close(fd, function()
+  local ok = aux.guarded_close(fd, function()
     for _, bufnr in ipairs(api.nvim_list_bufs()) do
       local bufname = resolve_bufname(root, bufnr)
       if bufname ~= nil then
@@ -42,5 +42,5 @@ return function(fzf)
     end
   end)
 
-  if ok then return infra.guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
+  if ok then return aux.guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
 end

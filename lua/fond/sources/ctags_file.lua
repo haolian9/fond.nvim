@@ -5,7 +5,7 @@ local jelly = require("infra.jellyfish")("fond.sources.ctags", "debug")
 local prefer = require("infra.prefer")
 local subprocess = require("infra.subprocess")
 
-local infra = require("fond.sources.infra")
+local aux = require("fond.sources.aux")
 
 local api = vim.api
 local uv = vim.loop
@@ -86,8 +86,8 @@ return function(use_cached_source, fzf)
 
   local fpath = assert(bufpath.file(bufnr))
 
-  local dest_fpath = infra.resolve_dest_fpath(fpath, "ctags_file")
-  if use_cached_source and fs.file_exists(dest_fpath) then return infra.guarded_call(fzf, dest_fpath, fzf_opts) end
+  local dest_fpath = aux.resolve_dest_fpath(fpath, "ctags_file")
+  if use_cached_source and fs.file_exists(dest_fpath) then return aux.guarded_call(fzf, dest_fpath, fzf_opts) end
 
   local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
   if open_err ~= nil then error(open_err) end
@@ -103,7 +103,7 @@ return function(use_cached_source, fzf)
 
   local linewriter
   do
-    local writer = infra.LineWriter(fd)
+    local writer = aux.LineWriter(fd)
 
     ---@param lines fun(): string[]?
     ---@return boolean
@@ -111,7 +111,7 @@ return function(use_cached_source, fzf)
   end
 
   subprocess.spawn("ctags", { args = ctags_args, cwd = fs.parent(fpath) }, linewriter, function(code)
-    if code == 0 then return infra.guarded_call(fzf, dest_fpath, fzf_opts) end
+    if code == 0 then return aux.guarded_call(fzf, dest_fpath, fzf_opts) end
     jelly.err("ctags failed: exit code=%d", code)
   end)
 end

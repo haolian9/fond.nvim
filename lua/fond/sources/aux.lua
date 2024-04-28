@@ -19,7 +19,7 @@ end
 
 function M.guarded_call(f, ...)
   local ok, err = xpcall(f, debug.traceback, ...)
-  if not ok then vim.schedule(function() jelly.err(err) end) end
+  if not ok then jelly.err(err) end
 end
 
 ---@param fd number
@@ -28,7 +28,7 @@ end
 function M.guarded_close(fd, f)
   local ok, err = xpcall(f, debug.traceback)
   uv.fs_close(fd)
-  if not ok then vim.schedule(function() jelly.warn(err) end) end
+  if not ok then jelly.warn(err) end
   return ok
 end
 

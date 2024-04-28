@@ -33,7 +33,10 @@ local function naked_text(item) return string.sub(item.text, #item.kind + #"[] "
 local function normalize_line(item, symbol)
   if symbol == nil then symbol = symbols[item.kind] or symbols.default end
   local text = naked_text(item)
-  return string.format("%s,%s,%s, %s %s", item.filename, item.lnum, item.col, symbol, text)
+  local row = item.lnum
+  local col = item.col - 1
+
+  return string.format("%s,%s,%s, %s %s", item.filename, row, col, symbol, text)
 end
 
 ---@param line_resolver fun(item: Item): string?

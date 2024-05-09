@@ -1,12 +1,11 @@
 local ex = require("infra.ex")
 local fn = require("infra.fn")
 local jumplist = require("infra.jumplist")
+local wincursor = require("infra.wincursor")
 
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
 local sting = require("sting")
-
-local api = vim.api
 
 ---@param choice string
 ---@return string,integer,integer,string @fpath,row,col,text
@@ -28,7 +27,7 @@ do
   local function main(cmd, fpath, row, col)
     jumplist.push_here()
     ex(cmd, fpath)
-    api.nvim_win_set_cursor(0, { row, col })
+    wincursor.g1(0, row, col)
   end
 
   single = {

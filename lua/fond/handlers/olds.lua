@@ -2,6 +2,7 @@ local buflines = require("infra.buflines")
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("fzf.handlers.olds")
 local jumplist = require("infra.jumplist")
+local wincursor = require("infra.wincursor")
 
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
@@ -32,13 +33,13 @@ do
     do --goto that position
       jelly.debug("path=%s, line=%d, col=%d", fpath, lnum, col)
       local winid = api.nvim_get_current_win()
-      local row_max = buflines.count(api.nvim_win_get_buf(winid))
+      local row_high = buflines.count(api.nvim_win_get_buf(winid))
       local row = lnum + 1
-      if row <= row_max then
-        api.nvim_win_set_cursor(winid, { row, col })
+      if row <= row_high then
+        wincursor.g1(winid, row, col)
       else
         jelly.warn("goto last line, as #%d line no longer exists", lnum)
-        api.nvim_win_set_cursor(winid, { row_max, col })
+        wincursor.g1(winid, row_high, col)
       end
     end
   end

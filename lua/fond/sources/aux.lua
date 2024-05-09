@@ -33,7 +33,7 @@ function M.guarded_close(fd, f)
 end
 
 ---@param fd number
----@return fun(lines: string[]|(fun(): string[]?)): boolean
+---@return fun(lines: fun(): string?): boolean
 function M.LineWriter(fd)
   return function(lines)
     return M.guarded_close(fd, function()

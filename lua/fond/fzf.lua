@@ -27,6 +27,7 @@ do
     "--bind", "ctrl-/:accept,ctrl-o:accept,ctrl-t:accept,space:accept", -- keys to accept
     "--bind", "ctrl-f:accept", -- accept but should be sent to the qflist
     "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space,ctrl-f",
+    "--bind", "ctrl-a:select-all",
     "--color", colors,
   })
 end
@@ -102,7 +103,7 @@ end
 ---@alias fond.fzf.Handler fun(query: string, action: string, choices: string[])
 
 ---@param opts fond.fzf.Opts
-local function fulfill_opts(opts) opts.pending_unlink = fn.nilor(opts.pending_unlink, false) end
+local function fulfill_opts(opts) opts.pending_unlink = fn.nilthen(opts.pending_unlink, false) end
 
 ---@param src_fpath string
 ---@param last_query? string

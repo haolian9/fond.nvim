@@ -1,6 +1,7 @@
 local ex = require("infra.ex")
 local fn = require("infra.fn")
 local jumplist = require("infra.jumplist")
+local wincursor = require("infra.wincursor")
 
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
@@ -28,7 +29,7 @@ do
   local function main(cmd, row, col)
     jumplist.push_here()
     ex(cmd, "%")
-    api.nvim_win_set_cursor(0, { row, col })
+    wincursor.g1(nil, row, col)
   end
 
   single = {

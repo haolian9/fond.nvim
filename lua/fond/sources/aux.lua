@@ -2,7 +2,7 @@ local M = {}
 
 local cthulhu = require("cthulhu")
 local fs = require("infra.fs")
-local jelly = require("infra.jellyfish")("fond.sources.files", "debug")
+local jelly = require("infra.jellyfish")("fond.sources.aux", "debug")
 
 local facts = require("fond.facts")
 

@@ -47,7 +47,9 @@ end
 
 ---@param name string
 local function fresh_provider(name)
-  return function()
+  ---@param use_last_query ?boolean
+  return function(use_last_query)
+    local state = require("fond.state")
     local fzf = require("fond.fzf")
 
     ---@type fond.Source
@@ -55,8 +57,11 @@ local function fresh_provider(name)
     ---@type fond.fzf.Handler
     local handler = require(string.format("fond.handlers.%s", name))
 
+    if use_last_query == nil then use_last_query = true end
+    local last_query = use_last_query and state.queries[name] or nil
+
     source(function(src_fpath, fzf_opts)
-      vim.schedule(function() fzf(src_fpath, nil, handler, fzf_opts) end)
+      vim.schedule(function() fzf(src_fpath, last_query, handler, fzf_opts) end)
     end)
   end
 end
@@ -73,5 +78,6 @@ M.buffers = fresh_provider("buffers")
 M.modified = fresh_provider("git_modified_files")
 M.statuses = fresh_provider("git_status_files")
 M.windows = fresh_provider("windows")
+M.args = fresh_provider("args")
 
 return M

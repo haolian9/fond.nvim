@@ -26,7 +26,8 @@ do
     "--bind", "char:unbind(char)+clear-query+put", -- placeholder&clear
     "--bind", "ctrl-/:accept,ctrl-o:accept,ctrl-t:accept,space:accept", -- keys to accept
     "--bind", "ctrl-f:accept", -- accept but should be sent to the qflist
-    "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space,ctrl-f",
+    "--bind", "ctrl-g:accept", -- accept but should be sent to the arglist
+    "--expect", "ctrl-/,ctrl-m,ctrl-o,ctrl-t,space,ctrl-f,ctrl-g",
     "--bind", "ctrl-a:select-all",
     "--color", colors,
   })

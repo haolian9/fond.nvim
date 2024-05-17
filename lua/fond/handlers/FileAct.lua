@@ -1,4 +1,5 @@
 local ex = require("infra.ex")
+local fn = require("infra.fn")
 
 local Act = require("fond.handlers.Act")
 local sting = require("sting")
@@ -21,7 +22,10 @@ local batch = {
     end
     shelf:feed_vim(true, true)
   end,
-  --todo: ctrl-a for :args?
+  ["ctrl-g"] = function(_, files)
+    --todo: need to make files relatived to pwd?
+    ex.cmd("arglocal", unpack(fn.tolist(files)))
+  end,
 }
 
 ---@param ns string @namespace; could be used for string.quickfix.shelf

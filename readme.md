@@ -22,6 +22,7 @@ a fuzzy finder for nvim based on fzf
 * lsp workspace symbols
 * windows: similar to `tmux join-pane`
 * ctags of a file
+* arglist
 
 ## status
 * just-works
@@ -29,7 +30,7 @@ a fuzzy finder for nvim based on fzf
 
 ## prerequisites
 * linux
-* nvim 0.9.*
+* nvim 0.10.*
 * haolian9/infra.nvim
 * haolian9/sting.nvim
 * haolian9/fzf # fork of junegunn's, for query placeholder and `--input/output` cli flag

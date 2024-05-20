@@ -15,17 +15,20 @@ local function source()
   local tabnr = nil
 
   return function()
-    if win_iter == nil then
-      local tab_id = tab_iter()
-      if tab_id == nil then return end
-      tabnr = api.nvim_tabpage_get_number(tab_id)
-      win_iter = listlib.iter(api.nvim_tabpage_list_wins(tab_id))
-    end
-    for winid in win_iter do
-      local bufnr = api.nvim_win_get_buf(winid)
-      local winnr = api.nvim_win_get_number(winid)
-      local bufname = api.nvim_buf_get_name(bufnr)
-      return string.format("%d,%d %d,%d - %s", winid, bufnr, tabnr, winnr, bufname)
+    while true do
+      if win_iter == nil then
+        local tab_id = tab_iter()
+        if tab_id == nil then return end
+        tabnr = api.nvim_tabpage_get_number(tab_id)
+        win_iter = listlib.iter(api.nvim_tabpage_list_wins(tab_id))
+      end
+      for winid in win_iter do
+        local bufnr = api.nvim_win_get_buf(winid)
+        local winnr = api.nvim_win_get_number(winid)
+        local bufname = api.nvim_buf_get_name(bufnr)
+        return string.format("%d,%d %d,%d - %s", winid, bufnr, tabnr, winnr, bufname)
+      end
+      win_iter = nil
     end
   end
 end

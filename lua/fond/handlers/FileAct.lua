@@ -24,7 +24,7 @@ local batch = {
   end,
   ["ctrl-g"] = function(_, files)
     --todo: need to make files relatived to pwd?
-    ex.cmd("arglocal", unpack(fn.tolist(files)))
+    ex("arglocal", unpack(fn.tolist(files)))
   end,
 }
 

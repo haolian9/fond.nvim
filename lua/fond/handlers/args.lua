@@ -11,7 +11,7 @@ local function normalize_choice(choice) return choice end
 local single
 do
   ---@param arg string
-  local function main(arg) ex.cmd("edit", arg) end
+  local function main(arg) ex("edit", arg) end
 
   single = {
     ["ctrl-/"] = main,

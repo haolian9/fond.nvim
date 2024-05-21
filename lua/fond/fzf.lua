@@ -106,11 +106,12 @@ end
 ---@param opts fond.fzf.Opts
 local function fulfill_opts(opts) opts.pending_unlink = fn.nilthen(opts.pending_unlink, false) end
 
+---@param purpose string @used for bufname, win footer
 ---@param src_fpath string
 ---@param last_query? string
 ---@param handler fond.fzf.Handler
 ---@param opts fond.fzf.Opts
-return function(src_fpath, last_query, handler, opts)
+return function(purpose, src_fpath, last_query, handler, opts)
   assert(handler ~= nil)
   fulfill_opts(opts)
 
@@ -122,7 +123,7 @@ return function(src_fpath, last_query, handler, opts)
 
   local winid
   do
-    local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250 }, resolve_geometry())
+    local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250, footer = string.format("fzf://%s", purpose), footer_pos = "center" }, resolve_geometry())
     winid = rifts.open.win(bufnr, true, winopts)
     api.nvim_win_set_hl_ns(winid, rifts.ns)
   end
@@ -170,6 +171,6 @@ return function(src_fpath, last_query, handler, opts)
     stdin = "pipe",
   })
 
-  bufrename(bufnr, string.format("fzf://%d", job_id))
+  bufrename(bufnr, string.format("fzf://%s/%d", purpose, job_id))
   ex("startinsert")
 end

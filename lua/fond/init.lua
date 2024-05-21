@@ -40,7 +40,7 @@ local function cachable_provider(name)
     local last_query = use_last_query and state.queries[name] or nil
 
     source(use_cached_source, function(src_fpath, fzf_opts)
-      vim.schedule(function() fzf(src_fpath, last_query, handler, fzf_opts) end)
+      vim.schedule(function() fzf(name, src_fpath, last_query, handler, fzf_opts) end)
     end)
   end
 end
@@ -61,7 +61,7 @@ local function fresh_provider(name)
     local last_query = use_last_query and state.queries[name] or nil
 
     source(function(src_fpath, fzf_opts)
-      vim.schedule(function() fzf(src_fpath, last_query, handler, fzf_opts) end)
+      vim.schedule(function() fzf(name, src_fpath, last_query, handler, fzf_opts) end)
     end)
   end
 end

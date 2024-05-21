@@ -14,15 +14,15 @@ a fuzzy finder for nvim based on fzf
 * git files: `git ls-files`
 * git modified files: `git ls-files --modified`
 * git status files: git status
-* buffers
+* ~~buffers~~
 * ~~mru~~
 * olds # haolian9/olds.nvim
 * sibling files `fd --type f getcwd()`
 * lsp document symbols
 * lsp workspace symbols
-* windows: similar to `tmux join-pane`
+* ~~windows: similar to `tmux join-pane`~~
 * ctags of a file
-* arglist
+* ~~arglist~~
 
 ## status
 * just-works
@@ -49,7 +49,6 @@ my personal config
 do
   m.n("<leader>s", function() require("fond").files() end)
   m.n("<leader>g", function() require("fond").tracked() end)
-  m.n("<leader>b", function() require("fond").buffers() end)
   m.n("<leader>u", function() require("fond").statuses() end)
   m.n("<leader>m", function() require("fond").olds() end)
   m.n("<leader>f", function() require("fond").siblings() end)
@@ -63,7 +62,7 @@ do
 
   do
     local spell = cmds.Spell("Fond", function(args) assert(require("fond")[args.provider])(args.fresh) end)
-    spell:add_arg("provider", "string", true, nil, cmds.ArgComp.constant({ "workspace_symbols", "windows", "ctags" }))
+    spell:add_arg("provider", "string", true, nil, cmds.ArgComp.constant({ "workspace_symbols", "ctags" }))
     spell:add_flag("fresh", "true", false)
     cmds.cast(spell)
   end

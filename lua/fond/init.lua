@@ -74,10 +74,7 @@ M.workspace_symbols = cachable_provider("lsp_workspace_symbols")
 M.olds = cachable_provider("olds")
 M.ctags = cachable_provider("ctags_file")
 
-M.buffers = fresh_provider("buffers")
 M.modified = fresh_provider("git_modified_files")
 M.statuses = fresh_provider("git_status_files")
-M.windows = fresh_provider("windows")
-M.args = fresh_provider("args")
 
 return M

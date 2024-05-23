@@ -2,6 +2,7 @@ local ex = require("infra.ex")
 local jumplist = require("infra.jumplist")
 local strlib = require("infra.strlib")
 local wincursor = require("infra.wincursor")
+local winsplit = require("infra.winsplit")
 
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
@@ -18,23 +19,24 @@ local function normalize_choice(choice)
   return row, text
 end
 
-local single
-do
-  ---@param cmd string
-  ---@param row integer
-  local function main(cmd, row)
+local single = {
+  ["ctrl-m"] = function(row)
     jumplist.push_here()
-    ex(cmd, "%")
     wincursor.g1(nil, row, 0)
-  end
-
-  single = {
-    ["ctrl-/"] = function(row) main("vsplit", row) end,
-    ["ctrl-o"] = function(row) main("split", row) end,
-    ["ctrl-m"] = function(row) main("edit", row) end,
-    ["ctrl-t"] = function(row) main("tabedit", row) end,
-  }
-end
+  end,
+  ["ctrl-/"] = function(row)
+    winsplit("right")
+    wincursor.g1(nil, row, 0)
+  end,
+  ["ctrl-o"] = function(row)
+    winsplit("below")
+    wincursor.g1(nil, row, 0)
+  end,
+  ["ctrl-t"] = function(row)
+    ex("tabedit", "%")
+    wincursor.g1(nil, row, 0)
+  end,
+}
 
 ---@type {[string]: fun(act: fond.handlers.Act, iter: fun():integer,string)} @iter(row,text)
 local batch = {

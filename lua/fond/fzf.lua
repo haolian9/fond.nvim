@@ -74,7 +74,7 @@ end
 ---@return string?,string?,string[]? @query,action,choices
 local function parse_output_file(path)
   --drain the io.lines to free the fd
-  local iter = fn.iter(fn.tolist(io.lines(path)))
+  local iter = io.lines(path)
 
   local query = iter()
   if query == nil then return end

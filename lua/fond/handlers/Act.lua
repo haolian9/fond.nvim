@@ -1,4 +1,4 @@
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("fond.handlers.Act", "debug")
 local strlib = require("infra.strlib")
 
@@ -21,7 +21,7 @@ function Act:__call(action, choices)
   local act
 
   act = self.batch[action]
-  if act ~= nil then return act(self, fn.map(self.normalize_choice, choices)) end
+  if act ~= nil then return act(self, itertools.map(self.normalize_choice, choices)) end
 
   act = self.single[action]
   if act ~= nil then return act(self.normalize_choice(assert(choices[1]))) end

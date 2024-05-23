@@ -1,5 +1,4 @@
 local bufpath = require("infra.bufpath")
-local fn = require("infra.fn")
 local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("fond.sources.ctags", "debug")
 local prefer = require("infra.prefer")
@@ -107,7 +106,7 @@ return function(use_cached_source, fzf)
 
     ---@param lines fun(): string[]?
     ---@return boolean
-    function linewriter(lines) return writer(fn.map(normalize_line, lines)) end
+    function linewriter(lines) return writer(itertools.map(normalize_line, lines)) end
   end
 
   subprocess.spawn("ctags", { args = ctags_args, cwd = fs.parent(fpath) }, linewriter, function(code)

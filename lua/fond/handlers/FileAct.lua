@@ -1,14 +1,19 @@
+local bufopen = require("infra.bufopen")
 local ex = require("infra.ex")
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
+local jumplist = require("infra.jumplist")
 
 local Act = require("fond.handlers.Act")
 local sting = require("sting")
 
 local single = {
-  ["ctrl-/"] = function(file) ex("vsplit", file) end,
-  ["ctrl-o"] = function(file) ex("split", file) end,
-  ["ctrl-m"] = function(file) ex("edit", file) end,
-  ["ctrl-t"] = function(file) ex("tabedit", file) end,
+  ["ctrl-m"] = function(file)
+    jumplist.push_here()
+    bufopen("inplace", file)
+  end,
+  ["ctrl-/"] = function(file) bufopen("right", file) end,
+  ["ctrl-o"] = function(file) bufopen("below", file) end,
+  ["ctrl-t"] = function(file) bufopen("tab", file) end,
 }
 
 ---@type {[string]: fun(act: fond.handlers.Act, files: fun(): string?)}
@@ -24,7 +29,7 @@ local batch = {
   end,
   ["ctrl-g"] = function(_, files)
     --todo: need to make files relatived to pwd?
-    ex("arglocal", unpack(fn.tolist(files)))
+    ex("arglocal", unpack(itertools.tolist(files)))
   end,
 }
 

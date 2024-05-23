@@ -1,7 +1,8 @@
 local ex = require("infra.ex")
-local fn = require("infra.fn")
 local jumplist = require("infra.jumplist")
+local strlib = require("infra.strlib")
 local wincursor = require("infra.wincursor")
+local winsplit = require("infra.winsplit")
 
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
@@ -12,7 +13,7 @@ local api = vim.api
 ---@param choice string
 ---@return integer,integer,string @row,col,text
 local function normalize_choice(choice)
-  local parts = fn.split_iter(choice, ",")
+  local parts = strlib.iter_splits(choice, ",")
   local _ = assert(parts())
   local row = assert(tonumber(parts()))
   local col = assert(tonumber(parts()))
@@ -21,24 +22,24 @@ local function normalize_choice(choice)
   return row, col, text
 end
 
-local single
-do
-  ---@param cmd string
-  ---@param row integer
-  ---@param col integer
-  local function main(cmd, row, col)
+local single = {
+  ["ctrl-m"] = function(row, col)
     jumplist.push_here()
-    ex(cmd, "%")
     wincursor.g1(nil, row, col)
-  end
-
-  single = {
-    ["ctrl-/"] = function(row, col) main("vsplit", row, col) end,
-    ["ctrl-o"] = function(row, col) main("split", row, col) end,
-    ["ctrl-m"] = function(row, col) main("edit", row, col) end,
-    ["ctrl-t"] = function(row, col) main("tabedit", row, col) end,
-  }
-end
+  end,
+  ["ctrl-/"] = function(row, col)
+    winsplit("right")
+    wincursor.g1(nil, row, col)
+  end,
+  ["ctrl-o"] = function(row, col)
+    winsplit("below")
+    wincursor.g1(nil, row, col)
+  end,
+  ["ctrl-t"] = function(row, col)
+    ex("tabedit", "%")
+    wincursor.g1(nil, row, col)
+  end,
+}
 
 ---@type {[string]: fun(act: fond.handlers.Act, iter: fun():integer,integer,string)} @iter(row,col,text)
 local batch = {

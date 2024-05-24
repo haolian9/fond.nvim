@@ -9,11 +9,11 @@ local sting = require("sting")
 local single = {
   ["ctrl-m"] = function(file)
     jumplist.push_here()
-    bufopen("inplace", file)
+    bufopen.inplace(file)
   end,
-  ["ctrl-/"] = function(file) bufopen("right", file) end,
-  ["ctrl-o"] = function(file) bufopen("below", file) end,
-  ["ctrl-t"] = function(file) bufopen("tab", file) end,
+  ["ctrl-/"] = bufopen.right,
+  ["ctrl-o"] = bufopen.below,
+  ["ctrl-t"] = bufopen.tab,
 }
 
 ---@type {[string]: fun(act: fond.handlers.Act, files: fun(): string?)}

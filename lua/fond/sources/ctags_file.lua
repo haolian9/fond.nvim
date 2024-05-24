@@ -1,5 +1,6 @@
 local bufpath = require("infra.bufpath")
 local fs = require("infra.fs")
+local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("fond.sources.ctags", "debug")
 local prefer = require("infra.prefer")
 local subprocess = require("infra.subprocess")

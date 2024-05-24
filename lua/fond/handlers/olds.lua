@@ -38,19 +38,19 @@ do
     ["ctrl-m"] = function(fpath, lnum, col)
       jumplist.push_here()
 
-      bufopen("inplace", fpath)
+      bufopen.inplace(fpath)
       safe_goto(0, lnum, col)
     end,
     ["ctrl-/"] = function(fpath, lnum, col)
-      bufopen("right", fpath)
+      bufopen.right(fpath)
       safe_goto(nil, lnum, col)
     end,
     ["ctrl-o"] = function(fpath, lnum, col)
-      bufopen("below", fpath)
+      bufopen.below(fpath)
       safe_goto(nil, lnum, col)
     end,
     ["ctrl-t"] = function(fpath, lnum, col)
-      bufopen("tab", fpath)
+      bufopen.tab(fpath)
       safe_goto(nil, lnum, col)
     end,
   }

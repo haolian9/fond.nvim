@@ -1,14 +1,13 @@
 local bufpath = require("infra.bufpath")
 local fs = require("infra.fs")
-local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("fond.sources.ctags", "debug")
 local prefer = require("infra.prefer")
 local subprocess = require("infra.subprocess")
 
 local aux = require("fond.sources.aux")
+local StdoutCollector = require("fond.sources.StdoutCollector")
 
 local api = vim.api
-local uv = vim.loop
 
 --nvim's &ft to ctags's language
 local ft_to_lang = {
@@ -89,9 +88,6 @@ return function(use_cached_source, fzf)
   local dest_fpath = aux.resolve_dest_fpath(fpath, "ctags_file")
   if use_cached_source and fs.file_exists(dest_fpath) then return aux.guarded_call(fzf, dest_fpath, fzf_opts) end
 
-  local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-  if open_err ~= nil then error(open_err) end
-
   local ctags_args = {
     "-o-",
     "--languages=" .. lang,
@@ -101,16 +97,10 @@ return function(use_cached_source, fzf)
     fs.basename(fpath),
   }
 
-  local linewriter
-  do
-    local writer = aux.LineWriter(fd)
+  local collector = StdoutCollector()
 
-    ---@param lines fun(): string[]?
-    ---@return boolean
-    function linewriter(lines) return writer(itertools.map(normalize_line, lines)) end
-  end
-
-  subprocess.spawn("ctags", { args = ctags_args, cwd = fs.parent(fpath) }, linewriter, function(code)
+  subprocess.spawn("ctags", { args = ctags_args, cwd = fs.parent(fpath) }, collector.on_stdout, function(code)
+    collector.write_to_file(dest_fpath, normalize_line)
     if code == 0 then return aux.guarded_call(fzf, dest_fpath, fzf_opts) end
     jelly.err("ctags failed: exit code=%d", code)
   end)

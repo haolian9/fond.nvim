@@ -26,13 +26,17 @@ return function(use_cached_source, fzf)
   local dest_fpath = aux.resolve_dest_fpath(fpath, "lsp_document_symbols")
   if use_cached_source and fs.file_exists(dest_fpath) then return aux.guarded_call(fzf, dest_fpath, fzf_opts) end
 
-  local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-  if open_err ~= nil then return jelly.err(open_err) end
-
   vim.lsp.buf.document_symbol({
     on_list = function(args)
-      local ok = aux.LineWriter(fd)(resolver(args.items))
-      if ok then return aux.guarded_call(fzf, dest_fpath, fzf_opts) end
+      local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
+      if open_err ~= nil then return jelly.err(open_err) end
+      for line in resolver(args.items) do
+        uv.fs_write(fd, line)
+        uv.fs_write(fd, "\n")
+      end
+      uv.fs_close(fd)
+
+      return aux.guarded_call(fzf, dest_fpath, fzf_opts)
     end,
   })
 end

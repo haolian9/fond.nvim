@@ -4,8 +4,7 @@ local project = require("infra.project")
 local subprocess = require("infra.subprocess")
 
 local aux = require("fond.sources.aux")
-
-local uv = vim.loop
+local StdoutCollector = require("fond.sources.StdoutCollector")
 
 ---@type fond.CacheableSource
 return function(use_cached_source, fzf)
@@ -15,10 +14,11 @@ return function(use_cached_source, fzf)
   local dest_fpath = aux.resolve_dest_fpath(root, "git_files")
   if use_cached_source and fs.file_exists(dest_fpath) then return aux.guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
 
-  local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-  if open_err ~= nil then return jelly.err(open_err) end
+  local collector = StdoutCollector()
 
-  subprocess.spawn("git", { args = { "ls-files" }, cwd = root }, aux.LineWriter(fd), function(code)
+  subprocess.spawn("git", { args = { "ls-files" }, cwd = root }, collector.on_stdout, function(code)
+    collector.write_to_file(dest_fpath)
+
     if code == 0 then return aux.guarded_call(fzf, dest_fpath, { pending_unlink = false }) end
     jelly.err("fd failed: exit code=%d", code)
   end)

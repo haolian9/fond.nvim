@@ -3,8 +3,7 @@ local project = require("infra.project")
 local subprocess = require("infra.subprocess")
 
 local aux = require("fond.sources.aux")
-
-local uv = vim.loop
+local StdoutCollector = require("fond.sources.StdoutCollector")
 
 ---@type fond.Source
 return function(fzf)
@@ -12,10 +11,11 @@ return function(fzf)
   if root == nil then return jelly.info("not a git repo") end
 
   local dest_fpath = os.tmpname()
-  local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
-  if open_err ~= nil then return jelly.err(open_err) end
+  local collector = StdoutCollector()
 
-  subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, aux.LineWriter(fd), function(code)
+  subprocess.spawn("git", { args = { "ls-files", "--modified" }, cwd = root }, collector.on_stdout, function(code)
+    collector.write_to_file(dest_fpath)
+
     if code == 0 then return aux.guarded_call(fzf, dest_fpath, { pending_unlink = true }) end
     jelly.err("fd failed: exit code=%d", code)
   end)

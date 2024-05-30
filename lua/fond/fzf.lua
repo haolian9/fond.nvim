@@ -8,7 +8,7 @@ local prefer = require("infra.prefer")
 local rifts = require("infra.rifts")
 
 local api = vim.api
-local uv = vim.loop
+local uv = vim.uv
 
 local mandatory_args = {}
 do

@@ -7,7 +7,7 @@ local aux = require("fond.sources.aux")
 local LspSymbolResolver = require("fond.sources.LspSymbolResolver")
 
 local api = vim.api
-local uv = vim.loop
+local uv = vim.uv
 
 ---persistent cache files are good for browsering codebases
 ---@type fond.CacheableSource

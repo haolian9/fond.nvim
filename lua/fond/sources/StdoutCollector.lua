@@ -2,7 +2,7 @@ local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("fond.sources.StdoutCollector", "info")
 local subprocess = require("infra.subprocess")
 
-local uv = vim.loop
+local uv = vim.uv
 
 ---@class fond.sources.StdoutCollector
 ---@field on_stdout fun(data?: string)

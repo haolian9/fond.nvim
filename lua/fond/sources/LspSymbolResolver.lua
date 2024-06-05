@@ -1,6 +1,6 @@
 local M = {}
 
-local listlib = require("infra.listlib")
+local itertools = require("infra.itertools")
 local strlib = require("infra.strlib")
 
 ---@enum
@@ -44,7 +44,7 @@ local function resolve_items(line_resolver)
   ---@param items Item[]
   ---@return fun(): string?
   return function(items)
-    local iter = listlib.iter(items)
+    local iter = itertools.iter(items)
 
     return function()
       for item in iter do

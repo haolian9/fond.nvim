@@ -27,8 +27,7 @@ return function()
       local fd, open_err = uv.fs_open(fpath, "w", tonumber("600", 8))
       if open_err ~= nil then error(open_err) end
 
-      local iter
-      iter = subprocess.iter_lines(chunks)
+      local iter = subprocess.iter_lines(chunks)
       if format_line then iter = itertools.map(format_line, iter) end
 
       for line in iter do

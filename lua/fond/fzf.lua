@@ -2,13 +2,13 @@ local bufrename = require("infra.bufrename")
 local dictlib = require("infra.dictlib")
 local ex = require("infra.ex")
 local fn = require("infra.fn")
+local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("fzf")
 local listlib = require("infra.listlib")
 local prefer = require("infra.prefer")
 local rifts = require("infra.rifts")
 
 local api = vim.api
-local uv = vim.uv
 
 local mandatory_args = {}
 do
@@ -161,8 +161,8 @@ return function(purpose, src_fpath, last_query, handler, opts)
       if not (query and action and choices) then return end
 
       local cb_ok, cb_err = xpcall(handler, debug.traceback, query, action, choices)
-      uv.fs_unlink(output_fpath)
-      if opts.pending_unlink then uv.fs_unlink(src_fpath) end
+      iuv.fs_unlink(output_fpath)
+      if opts.pending_unlink then iuv.fs_unlink(src_fpath) end
       if not cb_ok then jelly.err("fzf callback error: %s", cb_err) end
     end,
     pty = true,

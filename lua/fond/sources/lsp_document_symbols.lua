@@ -1,5 +1,6 @@
 local bufpath = require("infra.bufpath")
 local fs = require("infra.fs")
+local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("fond.sources.lsp_document_symbols", "debug")
 local prefer = require("infra.prefer")
 
@@ -7,7 +8,6 @@ local aux = require("fond.sources.aux")
 local LspSymbolResolver = require("fond.sources.LspSymbolResolver")
 
 local api = vim.api
-local uv = vim.uv
 
 ---persistent cache files are good for browsering codebases
 ---@type fond.CacheableSource
@@ -28,13 +28,13 @@ return function(use_cached_source, fzf)
 
   vim.lsp.buf.document_symbol({
     on_list = function(args)
-      local fd, open_err = uv.fs_open(dest_fpath, "w", tonumber("600", 8))
+      local fd, open_err = iuv.fs_open(dest_fpath, "w", tonumber("600", 8))
       if open_err ~= nil then return jelly.err(open_err) end
       for line in resolver(args.items) do
-        uv.fs_write(fd, line)
-        uv.fs_write(fd, "\n")
+        iuv.fs_write(fd, line)
+        iuv.fs_write(fd, "\n")
       end
-      uv.fs_close(fd)
+      iuv.fs_close(fd)
 
       return aux.guarded_call(fzf, dest_fpath, fzf_opts)
     end,

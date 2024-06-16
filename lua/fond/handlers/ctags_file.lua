@@ -1,5 +1,6 @@
 local ex = require("infra.ex")
 local jumplist = require("infra.jumplist")
+local ni = require("infra.ni")
 local strlib = require("infra.strlib")
 local wincursor = require("infra.wincursor")
 local winsplit = require("infra.winsplit")
@@ -7,8 +8,6 @@ local winsplit = require("infra.winsplit")
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
 local sting = require("sting")
-
-local api = vim.api
 
 ---@param choice string
 ---@return integer,string
@@ -41,8 +40,8 @@ local single = {
 ---@type {[string]: fun(act: fond.handlers.Act, iter: fun():integer,string)} @iter(row,text)
 local batch = {
   ["ctrl-f"] = function(act, iter)
-    local winid = api.nvim_get_current_win()
-    local bufnr = api.nvim_win_get_buf(winid)
+    local winid = ni.get_current_win()
+    local bufnr = ni.win_get_buf(winid)
 
     local shelf = sting.location.shelf(winid, act.ns)
     shelf:reset()

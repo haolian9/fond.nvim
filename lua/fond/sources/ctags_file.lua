@@ -1,13 +1,12 @@
 local bufpath = require("infra.bufpath")
 local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("fond.sources.ctags", "debug")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local subprocess = require("infra.subprocess")
 
 local aux = require("fond.sources.aux")
 local StdoutCollector = require("fond.sources.StdoutCollector")
-
-local api = vim.api
 
 --nvim's &ft to ctags's language
 local ft_to_lang = {
@@ -78,7 +77,7 @@ end
 return function(use_cached_source, fzf)
   local fzf_opts = { pending_unlink = false }
 
-  local bufnr = api.nvim_get_current_buf()
+  local bufnr = ni.get_current_buf()
 
   local lang = ft_to_lang[prefer.bo(bufnr, "filetype")]
   if lang == nil then return jelly.warn("unsupported filetype") end

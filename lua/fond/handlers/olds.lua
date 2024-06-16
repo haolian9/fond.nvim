@@ -2,13 +2,12 @@ local buflines = require("infra.buflines")
 local bufopen = require("infra.bufopen")
 local jelly = require("infra.jellyfish")("fzf.handlers.olds")
 local jumplist = require("infra.jumplist")
+local ni = require("infra.ni")
 local wincursor = require("infra.wincursor")
 
 local Act = require("fond.handlers.Act")
 local state = require("fond.state")
 local sting = require("sting")
-
-local api = vim.api
 
 ---@param choice string
 local function normalize_choice(choice)
@@ -23,8 +22,8 @@ end
 local single
 do
   local function safe_goto(winid, lnum, col)
-    winid = winid or api.nvim_get_current_win()
-    local row_high = buflines.count(api.nvim_win_get_buf(winid))
+    winid = winid or ni.get_current_win()
+    local row_high = buflines.count(ni.win_get_buf(winid))
     local row = lnum + 1
     if row <= row_high then
       wincursor.g1(winid, row, col)

@@ -2,12 +2,11 @@ local bufpath = require("infra.bufpath")
 local fs = require("infra.fs")
 local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("fond.sources.lsp_document_symbols", "debug")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 
 local aux = require("fond.sources.aux")
 local LspSymbolResolver = require("fond.sources.LspSymbolResolver")
-
-local api = vim.api
 
 ---persistent cache files are good for browsering codebases
 ---@type fond.CacheableSource
@@ -16,7 +15,7 @@ return function(use_cached_source, fzf)
 
   local resolver, fpath
   do
-    local bufnr = api.nvim_get_current_buf()
+    local bufnr = ni.get_current_buf()
     local ft = prefer.bo(bufnr, "filetype")
     resolver = LspSymbolResolver[ft]
     if resolver == nil then return jelly.info("no symbol handler found for %s", ft) end

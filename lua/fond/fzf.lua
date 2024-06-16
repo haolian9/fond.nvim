@@ -5,10 +5,9 @@ local fn = require("infra.fn")
 local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("fzf")
 local listlib = require("infra.listlib")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local rifts = require("infra.rifts")
-
-local api = vim.api
 
 local mandatory_args = {}
 do
@@ -35,7 +34,7 @@ end
 
 --show prompt at cursor line when possible horizental center
 local function resolve_geometry()
-  local winid = api.nvim_get_current_win()
+  local winid = ni.get_current_win()
 
   local winfo = assert(vim.fn.getwininfo(winid)[1])
   local win_width, win_height = winfo.width, winfo.height
@@ -117,7 +116,7 @@ return function(purpose, src_fpath, last_query, handler, opts)
 
   local bufnr
   do
-    bufnr = api.nvim_create_buf(false, true) --no ephemeral here
+    bufnr = ni.create_buf(false, true) --no ephemeral here
     prefer.bo(bufnr, "bufhidden", "wipe")
   end
 
@@ -125,7 +124,7 @@ return function(purpose, src_fpath, last_query, handler, opts)
   do
     local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250, footer = string.format("fzf://%s", purpose), footer_pos = "center" }, resolve_geometry())
     winid = rifts.open.win(bufnr, true, winopts)
-    api.nvim_win_set_hl_ns(winid, rifts.ns)
+    ni.win_set_hl_ns(winid, rifts.ns)
   end
 
   local output_fpath = os.tmpname()
@@ -150,7 +149,7 @@ return function(purpose, src_fpath, last_query, handler, opts)
 
   local job_id = vim.fn.termopen(cmd, {
     on_exit = function(_, exit_code)
-      api.nvim_win_close(winid, false)
+      ni.win_close(winid, false)
 
       if not (exit_code == 0 or exit_code == 1 or exit_code == 130) then
         -- 0: ok, 1: no match, 2: error, 130: interrupt

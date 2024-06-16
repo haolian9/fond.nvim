@@ -2,8 +2,7 @@ local M = {}
 
 local coreutils = require("infra.coreutils")
 local highlighter = require("infra.highlighter")
-
-local api = vim.api
+local ni = require("infra.ni")
 
 do
   local root = string.format("/tmp/%s-nvim-fzf", coreutils.whoami())
@@ -13,7 +12,7 @@ do
 end
 
 do
-  local ns = api.nvim_create_namespace("fzf.floatwin")
+  local ns = ni.create_namespace("fzf.floatwin")
   local hi = highlighter(ns)
   if vim.go.background == "light" then
     hi("NormalFloat", { fg = 8 })

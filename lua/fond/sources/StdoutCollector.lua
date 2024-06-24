@@ -27,7 +27,7 @@ return function()
       if open_err ~= nil then error(open_err) end
 
       local iter = subprocess.iter_lines(chunks)
-      if format_line then iter = itertools.map(format_line, iter) end
+      if format_line then iter = itertools.map(iter, format_line) end
 
       for line in iter do
         iuv.fs_write(fd, line)

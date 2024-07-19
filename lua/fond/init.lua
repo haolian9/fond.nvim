@@ -72,6 +72,7 @@ M.tracked = cachable_provider("git_files")
 M.document_symbols = cachable_provider("lsp_document_symbols")
 M.olds = cachable_provider("olds")
 M.ctags = cachable_provider("ctags_file")
+M.helps = cachable_provider("helps")
 
 M.modified = fresh_provider("git_modified_files")
 M.statuses = fresh_provider("git_status_files")

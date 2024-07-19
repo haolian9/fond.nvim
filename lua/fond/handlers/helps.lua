@@ -25,7 +25,7 @@ do
 
   local function open_in_tab(subject) ex.eval("tab help %s", subject) end
 
-  local openmode_to_wincmd = { left = "L", right = "H", above = "K", below = "J" }
+  local openmode_to_wincmd = { left = "H", right = "L", above = "K", below = "J" }
 
   ---@param subject string
   ---@param open_mode infra.bufopen.Mode

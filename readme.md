@@ -19,10 +19,10 @@ a fuzzy finder for nvim based on fzf
 * olds # haolian9/olds.nvim
 * sibling files `fd --type f getcwd()`
 * lsp document symbols
-* lsp workspace symbols
 * ~~windows: similar to `tmux join-pane`~~
 * ctags of a file
 * ~~arglist~~
+* helps
 
 ## status
 * just-works
@@ -39,30 +39,34 @@ optional
 * fd
 * git
 * haolian9/olds.nvim
-* lsp
 * ctags
 
 ## usage
 
 my personal config
 ```
-do
+do --fond
   m.n("<leader>s", function() require("fond").files() end)
   m.n("<leader>g", function() require("fond").tracked() end)
   m.n("<leader>u", function() require("fond").statuses() end)
   m.n("<leader>m", function() require("fond").olds() end)
   m.n("<leader>f", function() require("fond").siblings() end)
   m.n("<leader>d", function() require("fond").document_symbols() end)
+  m.n("<leader>t", function() require("fond").ctags() end)
+  m.n("<leader>h", function() require("fond").helps() end)
+
   --no-cache version
   m.n("<leader>S", function() require("fond").files(false) end)
   m.n("<leader>G", function() require("fond").tracked(false) end)
   m.n("<leader>M", function() require("fond").olds(false) end)
   m.n("<leader>F", function() require("fond").siblings(false) end)
   m.n("<leader>D", function() require("fond").document_symbols(false) end)
+  m.n("<leader>T", function() require("fond").ctags(false) end)
+  m.n("<leader>H", function() require("fond").helps(false) end)
 
   do
     local spell = cmds.Spell("Fond", function(args) assert(require("fond")[args.provider])(args.fresh) end)
-    spell:add_arg("provider", "string", true, nil, cmds.ArgComp.constant({ "workspace_symbols", "ctags" }))
+    spell:add_arg("provider", "string", true, nil, cmds.ArgComp.constant({ "windows" }))
     spell:add_flag("fresh", "true", false)
     cmds.cast(spell)
   end

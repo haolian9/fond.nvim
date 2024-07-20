@@ -60,7 +60,7 @@ M.lua = resolve_items(function(item)
   local symbol
   if item.kind == "Variable" then
     -- ok: M.foo
-    if strlib.find(item.text, ".") == nil then return end
+    if not strlib.contains(item.text, ".") then return end
     symbol = symbols.Function
   elseif item.kind == "Function" then
     -- no: anonymous function

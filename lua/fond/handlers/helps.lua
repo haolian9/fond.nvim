@@ -1,4 +1,5 @@
 local augroups = require("infra.augroups")
+local rifts = require("infra.rifts")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
 local feedkeys = require("infra.feedkeys")
@@ -41,7 +42,7 @@ do
     local bufnr = Ephemeral({ namepat = "helphelp://{bufnr}", modifiable = false })
     unsafe.prepare_help_buffer(bufnr)
 
-    local winid = ni.open_win(bufnr, false, { relative = "editor", row = 0, col = 0, width = 1, height = 1, hide = true })
+    local winid = rifts.open.win(bufnr, false, { relative = "editor", row = 0, col = 0, width = 1, height = 1, hide = true })
 
     local aug = augroups.BufAugroup(bufnr, "helphelp", false)
     aug:once("BufWipeout", {

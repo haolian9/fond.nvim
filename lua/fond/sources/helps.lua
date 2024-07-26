@@ -31,5 +31,5 @@ return function(use_cached_source, fzf)
     iuv.fs_close(fd)
   end
 
-  return aux.guarded_call(fzf, src_fpath, fzf_opts)
+  return aux.guarded_call(fzf, dest_fpath, fzf_opts)
 end

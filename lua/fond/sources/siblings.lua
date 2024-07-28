@@ -14,6 +14,7 @@ local fd_args = {
   "--type", "f",
   "--max-depth", "1",
   "--exclude", ".git",
+  "--max-results", "999",
 }
 
 ---@type fond.CacheableSource

@@ -9,6 +9,7 @@ local aux = require("fond.sources.aux")
 local StdoutCollector = require("fond.sources.StdoutCollector")
 
 --nvim's &ft to ctags's language
+--`$ ctags --print-language %f`
 local ft_to_lang = {
   lua = "Lua",
   python = "Python",
@@ -18,6 +19,7 @@ local ft_to_lang = {
   go = "Go",
   vim = "Vim",
   markdown = "Markdown",
+  php = "PHP",
 }
 
 --see `ctags --list-kinds-full`

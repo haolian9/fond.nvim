@@ -23,7 +23,6 @@ local ft_to_lang = {
 }
 
 --see `ctags --list-kinds-full`
---todo: lang-independent
 local kind_to_symbol = {
   ["function"] = "函",
   member = "函",

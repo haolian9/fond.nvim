@@ -24,19 +24,19 @@ end
 local single = {
   ["ctrl-m"] = function(row, col)
     jumplist.push_here()
-    wincursor.g1(nil, row, col)
+    wincursor.g1(0, row, col)
   end,
   ["ctrl-/"] = function(row, col)
     winsplit("right")
-    wincursor.g1(nil, row, col)
+    wincursor.g1(0, row, col)
   end,
   ["ctrl-o"] = function(row, col)
     winsplit("below")
-    wincursor.g1(nil, row, col)
+    wincursor.g1(0, row, col)
   end,
   ["ctrl-t"] = function(row, col)
     ex("tabedit", "%")
-    wincursor.g1(nil, row, col)
+    wincursor.g1(0, row, col)
   end,
 }
 

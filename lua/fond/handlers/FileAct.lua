@@ -22,15 +22,11 @@ local batch = {
     local shelf = sting.quickfix.shelf(act.ns)
     shelf:reset()
     for file in files do
-      --todo: what's the better value?
       shelf:append({ filename = file, col = 1, lnum = 1, text = "" })
     end
     shelf:feed_vim(true, true)
   end,
-  ["ctrl-g"] = function(_, files)
-    --todo: need to make files relatived to pwd?
-    ex("arglocal", unpack(itertools.tolist(files)))
-  end,
+  ["ctrl-g"] = function(_, files) ex("arglocal", unpack(itertools.tolist(files))) end,
 }
 
 ---@param ns string @namespace; could be used for string.quickfix.shelf

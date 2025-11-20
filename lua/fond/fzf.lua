@@ -5,6 +5,7 @@ local fn = require("infra.fn")
 local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("fzf")
 local listlib = require("infra.listlib")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local rifts = require("infra.rifts")
@@ -147,7 +148,7 @@ return function(purpose, src_fpath, last_query, handler, opts)
     end
   end
 
-  local job_id = vim.fn.termopen(cmd, {
+  local job_id = mi.become_term(cmd, {
     on_exit = function(_, exit_code)
       ni.win_close(winid, false)
 
@@ -164,10 +165,6 @@ return function(purpose, src_fpath, last_query, handler, opts)
       if opts.pending_unlink then iuv.fs_unlink(src_fpath) end
       if not cb_ok then jelly.err("fzf callback error: %s", cb_err) end
     end,
-    pty = true,
-    stderr_buffered = false,
-    stdout_buffered = false,
-    stdin = "pipe",
   })
 
   bufrename(bufnr, string.format("fzf://%s/%d", purpose, job_id))

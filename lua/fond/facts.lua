@@ -21,7 +21,7 @@ do
     hi("NormalFloat", { fg = 7 })
     hi("WinSeparator", { fg = 243 })
   end
-  M.hl_ns = ns
+  M.floatwin_ns = ns
 end
 
 return M

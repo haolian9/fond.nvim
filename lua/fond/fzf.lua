@@ -10,6 +10,8 @@ local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local rifts = require("infra.rifts")
 
+local facts = require("fond.facts")
+
 local mandatory_args = {}
 do
   local colors --ref: https://man.archlinux.org/man/fzf.1.en#color=
@@ -125,7 +127,7 @@ return function(purpose, src_fpath, last_query, handler, opts)
   do
     local winopts = dictlib.merged({ relative = "win", border = "single", zindex = 250, footer = string.format("fzf://%s", purpose), footer_pos = "center" }, resolve_geometry())
     winid = rifts.open.win(bufnr, true, winopts)
-    ni.win_set_hl_ns(winid, rifts.ns)
+    ni.win_set_hl_ns(winid, facts.floatwin_ns)
   end
 
   local output_fpath = os.tmpname()

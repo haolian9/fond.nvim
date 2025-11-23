@@ -1,8 +1,8 @@
-
-a fuzzy finder for nvim based on fzf
+merely a wrapper of `:terminal fzf` used in nvim
 
 ## design
-* i dont use coroutines
+* no use of coroutines, which is too complicated to me
+* no preview
 * query placeholder
 * two version of sources: cache and non-cache
 * caching in files under /tmp
@@ -10,19 +10,21 @@ a fuzzy finder for nvim based on fzf
 * actions, `<c-*>` are mutual exclusive between single and batch handling, rather than the choices's number
 
 ## sources
-* files: `fd --type f`
-* git files: `git ls-files`
-* git modified files: `git ls-files --modified`
-* git status files: git status
+* files              # `fd --type f`
+* git files          # `git ls-files`
+* git modified files # `git ls-files --modified`
+* git status files   # `git status`
+* olds               # `haolian9/olds.nvim`
+* sibling files      # `fd --type f getcwd()`
+* lsp document symbols
+* ctags for single file # `universal-ctags`
+* helps
+
+removed due to haolian9/beckon.nvim
 * ~~buffers~~
 * ~~mru~~
-* olds # haolian9/olds.nvim
-* sibling files `fd --type f getcwd()`
-* lsp document symbols
 * ~~windows: similar to `tmux join-pane`~~
-* ctags of a file
 * ~~arglist~~
-* helps
 
 ## status
 * just-works

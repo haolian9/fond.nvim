@@ -1,7 +1,10 @@
 local M = {}
 
 local itertools = require("infra.itertools")
+local logging = require("infra.logging")
 local strlib = require("infra.strlib")
+
+local log = logging.newlogger("fond.LspSymbolResolver", "info")
 
 ---@enum
 local symbols = {
@@ -9,6 +12,7 @@ local symbols = {
   Method = "函",
   Struct = "構",
   Class = "構",
+  Property = "属",
   default = "無",
 }
 
@@ -57,17 +61,26 @@ end
 
 ---@type Resolver
 M.lua = resolve_items(function(item)
+  log.debug("lua symbol: %s", item)
   local symbol
   if item.kind == "Variable" then
-    -- ok: M.foo
+    -- no: bare variable
     if not strlib.contains(item.text, ".") then return end
-    symbol = symbols.Function
+    -- yes: m.var
+    symbol = symbols.Property
   elseif item.kind == "Function" then
     -- no: anonymous function
-    if strlib.endswith(item.text, "->") then return end
+    if item.text == "[Function] return" then return end
+    -- yes: named function
+    symbol = symbols.Function
+  elseif item.kind == "Method" then
+    -- yes: method
+    symbol = symbols.Method
+  elseif item.kind == "Object" then
+    -- yes: class
+    symbol = symbols.Class
   else
-    -- no: whitelist only
-    return
+    return -- no: all others
   end
 
   return normalize_line(item, symbol)

@@ -1,9 +1,7 @@
-local buflines = require("infra.buflines")
 local bufopen = require("infra.bufopen")
 local jelly = require("infra.jellyfish")("fzf.handlers.olds")
 local jumplist = require("infra.jumplist")
 local mi = require("infra.mi")
-local ni = require("infra.ni")
 local wincursor = require("infra.wincursor")
 
 local Act = require("fond.handlers.Act")
@@ -24,14 +22,8 @@ local single
 do
   local function safe_goto(winid, lnum, col)
     winid = mi.resolve_winid_param(winid)
-    local row_high = buflines.count(ni.win_get_buf(winid))
-    local row = lnum + 1
-    if row <= row_high then
-      wincursor.g1(winid, row, col)
-    else
-      jelly.warn("goto last line, as #%d line no longer exists", lnum)
-      wincursor.g1(winid, row_high, col)
-    end
+    --ignore error: 'Cursor position outside buffer'
+    pcall(wincursor.g0, winid, lnum, col)
   end
 
   single = {

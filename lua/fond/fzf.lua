@@ -1,7 +1,6 @@
 local bufrename = require("infra.bufrename")
 local dictlib = require("infra.dictlib")
 local ex = require("infra.ex")
-local fn = require("infra.fn")
 local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("fzf")
 local listlib = require("infra.listlib")
@@ -106,7 +105,9 @@ end
 ---@alias fond.fzf.Handler fun(query: string, action: string, choices: string[])
 
 ---@param opts fond.fzf.Opts
-local function fulfill_opts(opts) opts.pending_unlink = fn.nilthen(opts.pending_unlink, false) end
+local function fulfill_opts(opts) --
+  if opts.pending_unlink == nil then opts.pending_unlink = false end
+end
 
 ---@param purpose string @used for bufname, win footer
 ---@param src_fpath string
